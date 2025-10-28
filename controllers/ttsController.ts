@@ -11,7 +11,7 @@ export const ttsController = async (req: Request, res: Response) => {
         const { audioBase64, mimeType } = await textToSpeech(text);
         res.json({ audioBase64, mimeType });
     } catch (error) {
-        req.log.error(error);
+        req.log.error(error, "Error al generar el audio");
         res.status(500).json({ error: "Error al generar el audio" });
     }
 };

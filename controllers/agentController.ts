@@ -1,7 +1,7 @@
+import { FunctionCall } from "@google/genai"; // Import FunctionCall
 import { Request, Response } from "express";
 import { useTools } from "../services/geminiService";
 import { addTask, getTasks, updateTaskStatus } from "../services/taskService";
-import { FunctionCall } from "@google/genai"; // Import FunctionCall
 
 export const agentController = async (req: Request, res: Response) => {
   try {
@@ -31,7 +31,7 @@ export const agentController = async (req: Request, res: Response) => {
           if (call.args && typeof call.args.task === "string") {
             toolResult = await addTask(call.args.task);
           } else {
-            req.log.error(call.args, "Invalid arguments for add_task");
+            req.log.error(call.args, "Argumentos inválidos para add_task");
             return res.status(400).json({ error: "Argumentos inválidos para add_task" });
           }
           break;
@@ -40,7 +40,7 @@ export const agentController = async (req: Request, res: Response) => {
           if (call.args && (typeof call.args.status === "string" || call.args.status === undefined)) {
             toolResult = await getTasks(call.args.status);
           } else {
-            req.log.error(call.args, "Invalid arguments for get_tasks");
+            req.log.error(call.args, "Argumentos inválidos para get_tasks");
             return res.status(400).json({ error: "Argumentos inválidos para get_tasks" });
           }
           break;
@@ -53,7 +53,7 @@ export const agentController = async (req: Request, res: Response) => {
           ) {
             toolResult = await updateTaskStatus(call.args.taskId, call.args.status);
           } else {
-            req.log.error(call.args, "Invalid arguments for update_task_status");
+            req.log.error(call.args, "Argumentos inválidos para update_task_status");
             return res.status(400).json({ error: "Argumentos inválidos para update_task_status" });
           }
           break;
@@ -67,7 +67,7 @@ export const agentController = async (req: Request, res: Response) => {
       res.status(500).json({ error: "No se recibió una respuesta válida del modelo" });
     }
   } catch (error) {
-    req.log.error(error);
+    req.log.error(error, "El agente no pudo procesar la solicitud");
     res.status(500).json({ error: "El agente no pudo procesar la solicitud" });
   }
 };

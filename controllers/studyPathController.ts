@@ -50,7 +50,7 @@ export const createStudyPath = async (req: Request, res: Response) => {
         client.release();
       }
     } catch (e) {
-      req.log.error("Failed to parse JSON from model or save to DB:", cleanedResult);
+      req.log.error(e, "Error al parsear JSON del modelo o guardar en DB:");
       res
         .status(500)
         .json({
@@ -58,7 +58,7 @@ export const createStudyPath = async (req: Request, res: Response) => {
         });
     }
   } catch (error) {
-    req.log.error(error);
+    req.log.error(error, "Error al generar la ruta de estudio");
     res.status(500).json({ error: "Error al generar la ruta de estudio" });
   }
 };
@@ -76,7 +76,7 @@ export const getStudyPath = async (req: Request, res: Response) => {
       client.release();
     }
   } catch (error) {
-    req.log.error(error);
+    req.log.error(error, "Error al obtener la ruta de estudio");
     res.status(500).json({ error: "Error al obtener la ruta de estudio" });
   }
 };
@@ -95,7 +95,7 @@ export const getStudyPathModule = async (req: Request, res: Response) => {
       client.release();
     }
   } catch (error) {
-    req.log.error(error);
+    req.log.error(error, "Error al obtener el módulo de la ruta de estudio");
     res.status(500).json({ error: "Error al obtener el módulo de la ruta de estudio" });
   }
 };
@@ -145,7 +145,7 @@ export const generateImagesForPath = async (req: Request, res: Response) => {
       client.release();
     }
   } catch (error) {
-    req.log.error("Error en /generate-images-for-path:", error);
+    req.log.error(error, "Error en /generate-images-for-path:");
     res.status(500).json({ error: "Error al generar las imágenes para la ruta de estudio" });
   }
 };
