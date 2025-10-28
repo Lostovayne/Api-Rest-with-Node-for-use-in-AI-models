@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import pool from "../db";
-import { generateText } from "../services/geminiService";
+import { generateText, generateEmbedding } from "../services/geminiService";
 import { generateImageFromGroq } from "../services/grokService";
 
 export const createStudyPath = async (req: Request, res: Response) => {
@@ -35,9 +35,15 @@ export const createStudyPath = async (req: Request, res: Response) => {
         const studyPathId = studyPathResult.rows[0].id;
 
         for (const module of jsonResponse.studyPath) {
+          // Create a single text block for embedding
+          const textToEmbed = `Title: ${module.title}\nDescription: ${module.description}\nSubtopics: ${module.subtopics.join(', ')}`;
+
+          // Generate the embedding
+          const embedding = await generateEmbedding(textToEmbed);
+
           await client.query(
-            "INSERT INTO study_path_modules (study_path_id, title, description, subtopics) VALUES ($1, $2, $3, $4)",
-            [studyPathId, module.title, module.description, module.subtopics]
+            "INSERT INTO study_path_modules (study_path_id, title, description, subtopics, embedding) VALUES ($1, $2, $3, $4, $5)",
+            [studyPathId, module.title, module.description, module.subtopics, `[${embedding.join(',')}]`]
           );
         }
 

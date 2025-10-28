@@ -14,6 +14,9 @@ const pool = new Pool({
 export const createTables = async () => {
   const client = await pool.connect();
   try {
+    await client.query('CREATE EXTENSION IF NOT EXISTS vector;');
+    await client.query('ALTER TABLE study_path_modules ADD COLUMN IF NOT EXISTS embedding vector(768);');
+
     await client.query(`
             CREATE TABLE IF NOT EXISTS study_paths (
                 id SERIAL PRIMARY KEY,

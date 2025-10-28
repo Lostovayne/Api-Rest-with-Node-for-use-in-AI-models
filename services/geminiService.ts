@@ -24,6 +24,15 @@ export const generateText = async (prompt: string): Promise<string> => {
   return response.text ?? "";
 };
 
+export const generateEmbedding = async (text: string): Promise<number[]> => {
+  const ai = getGenAI();
+  const response = await ai.models.embedContent({
+    model: "text-embedding-004",
+    content: text,
+  });
+  return response.embedding.values;
+};
+
 export const analyzeImage = async (
   prompt: string,
   imageBase64: string,
