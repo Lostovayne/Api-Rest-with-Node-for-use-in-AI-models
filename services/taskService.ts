@@ -41,3 +41,29 @@ export const updateTaskStatus = async (taskId: number, status: string): Promise<
         client.release();
     }
 };
+
+export const getDailyRecommendations = async (): Promise<{ tasks: string[], timeOfDay: string }> => {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(
+            'SELECT * FROM user_tasks WHERE status = $1 ORDER BY created_at ASC',
+            ['pending']
+        );
+        const pendingTasks = result.rows.map(task => task.task);
+
+        const hour = new Date().getHours();
+        let timeOfDay: string;
+        if (hour >= 5 && hour < 12) {
+            timeOfDay = "mañana";
+        } else if (hour >= 12 && hour < 18) {
+            timeOfDay = "tarde";
+        } else {
+            timeOfDay = "noche";
+        }
+
+        return { tasks: pendingTasks, timeOfDay };
+
+    } finally {
+        client.release();
+    }
+};

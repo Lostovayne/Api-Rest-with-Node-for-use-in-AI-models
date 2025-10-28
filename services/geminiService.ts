@@ -121,6 +121,14 @@ const taskToolDeclarations: FunctionDeclaration[] = [
       required: ["taskId", "status"],
     },
   },
+  {
+    name: "get_daily_recommendations",
+    parameters: {
+      type: Type.OBJECT,
+      description: "Obtiene recomendaciones sobre qué aprender o hacer hoy, basado en las tareas pendientes del usuario.",
+      properties: {},
+    },
+  },
 ];
 
 export const useTools = async (prompt: string): Promise<GenerateContentResponse> => {

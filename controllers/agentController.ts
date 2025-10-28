@@ -1,7 +1,7 @@
 import { FunctionCall } from "@google/genai"; // Import FunctionCall
 import { Request, Response } from "express";
-import { useTools } from "../services/geminiService";
-import { addTask, getTasks, updateTaskStatus } from "../services/taskService";
+import { useTools, groundWithSearch } from "../services/geminiService"; // Import groundWithSearch
+import { addTask, getTasks, updateTaskStatus, getDailyRecommendations } from "../services/taskService"; // Import getDailyRecommendations
 
 export const agentController = async (req: Request, res: Response) => {
   try {
@@ -56,6 +56,19 @@ export const agentController = async (req: Request, res: Response) => {
             req.log.error(call.args, "Argumentos inválidos para update_task_status");
             return res.status(400).json({ error: "Argumentos inválidos para update_task_status" });
           }
+          break;
+        case "get_daily_recommendations": // New case for the new tool
+          const { tasks, timeOfDay } = await getDailyRecommendations();
+          let recommendationPrompt: string;
+
+          if (tasks.length === 0) {
+            recommendationPrompt = `Eres un asistente de estudio. El usuario no tiene tareas pendientes. Recomiéndale que añada nuevas metas o que disfrute de su tiempo libre.`;
+          } else {
+            recommendationPrompt = `Eres un asistente de estudio y productividad. Es la ${timeOfDay}. El usuario tiene las siguientes tareas pendientes: ${tasks.join(', ')}.\n            Basado en estas tareas, genera una recomendación detallada y motivadora para el día.\n            Considera la hora del día para dar consejos contextuales (ej. "es la mañana, empieza con esto").\n            Sugiere cómo abordar las tareas, si dividirlas, priorizar, o qué estudiar primero.\n            Si es relevante, usa la herramienta de búsqueda de Google para obtener información actualizada sobre los temas de las tareas (ej. "aprender Docker", "React 19.2") y menciona su relevancia actual o recomendaciones de estudio.\n            Mantén un tono amigable y alentador.`;
+          }
+          
+          const recommendationResult = await groundWithSearch(recommendationPrompt);
+          toolResult = recommendationResult.text; // Get the text response from the model
           break;
         default:
           return res.status(400).json({ error: `Herramienta desconocida: ${call.name}` });
