@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import { createTables } from "./db";
+import { createTables, seedDatabase } from "./db";
 import routes from "./routes";
 
 import { logger, pinoHttpMiddleware } from "./middlewares/logger";
@@ -31,5 +31,6 @@ app.use("/", routes);
 
 app.listen(port, async () => {
   await createTables();
+  await seedDatabase();
   logger.info(`El servidor está corriendo en el puerto ${port}`);
 });
