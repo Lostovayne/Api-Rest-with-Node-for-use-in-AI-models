@@ -121,13 +121,24 @@ sequenceDiagram
 
 ---
 
-## 🧩 Endpoints Principales
+## 🧩 Endpoints de la API
 
-- `POST /api/v1/study-path` — Genera rutas de estudio personalizadas.
-- `POST /api/v1/agent` — Agente inteligente para recomendaciones.
-- `GET /api/v1/search` — Búsqueda semántica con pgvector.
-- `POST /api/v1/quiz` — Quizzes autogenerados.
-- `POST /api/v1/tts` — Text-to-Speech.
+| Método | Endpoint                      | Descripción                                                 | Body / Parámetros                                            |
+| :------- | :---------------------------- | :---------------------------------------------------------- | :----------------------------------------------------------- |
+| `POST`   | `/study-path`                 | Encola una tarea para generar una nueva ruta de estudio.    | `Body: { "topic": "string" }`                                |
+| `GET`    | `/study-path/:id`             | Obtiene los módulos de una ruta de estudio específica.      | `Parámetro: id` (ID de la ruta)                              |
+| `GET`    | `/study-path-modules/:id`     | Obtiene un módulo de estudio específico.                    | `Parámetro: id` (ID del módulo)                              |
+| `POST`   | `/generate-images-for-path`   | Genera las imágenes para todos los módulos de una ruta.     | `Body: { "studyPathId": "number" }`                          |
+| `POST`   | `/agent`                      | Interactúa con el agente inteligente para tareas y recom.   | `Body: { "prompt": "string" }`                               |
+| `POST`   | `/text-to-speech`             | Convierte un texto a voz.                                   | `Body: { "text": "string" }`                                 |
+| `POST`   | `/modules/complete`           | Marca un módulo como completado y otorga logros.            | `Body: { "userId": "number", "moduleId": "number" }`         |
+| `GET`    | `/users/:userId/progress`     | Obtiene el progreso de un usuario (módulos y logros).       | `Parámetro: userId`                                          |
+| `GET`    | `/users/:userId/dashboard`    | Obtiene un resumen del dashboard de un usuario.             | `Parámetro: userId`                                          |
+| `GET`    | `/modules/:moduleId/quiz`     | Genera un nuevo quiz para un módulo.                        | `Parámetro: moduleId`                                        |
+| `POST`   | `/quizzes/:quizId/submit`     | Envía las respuestas de un quiz y obtiene el resultado.     | `Parámetro: quizId`, `Body: { "userId": "number", "answers": [{ "questionId": "number", "selectedOptionIndex": "number" }] }` |
+| `GET`    | `/users/:userId/performance`  | Obtiene el historial de rendimiento en quizzes de un usuario. | `Parámetro: userId`                                          |
+| `GET`    | `/search`                     | Realiza una búsqueda semántica en los módulos.              | `Query: ?q=tu-busqueda`                                      |
+| `GET`    | `/health`                     | Verifica el estado de salud de la API.                      | N/A                                                          |
 
 ---
 

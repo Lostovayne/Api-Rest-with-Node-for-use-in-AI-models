@@ -124,7 +124,7 @@ export const createTables = async () => {
         `);
 
     // Alter table after it has been created
-    await client.query('ALTER TABLE study_path_modules ADD COLUMN IF NOT EXISTS embedding vector(768);');
+    await client.query('ALTER TABLE study_path_modules ADD COLUMN IF NOT EXISTS embedding vector(3072);');
   } finally {
     client.release();
   }

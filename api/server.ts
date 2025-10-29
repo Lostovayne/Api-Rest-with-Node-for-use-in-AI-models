@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import { createTables, seedDatabase } from "../db"; // Adjusted path
-import { queueService } from '../services/queueService';
+import { queueService } from "../services/queueService";
 import routes from "./routes";
 
 import { logger, pinoHttpMiddleware } from "./middlewares/logger";
@@ -35,4 +35,5 @@ app.listen(port, async () => {
   await seedDatabase();
   await queueService.connect();
   logger.info(`El servidor está corriendo en el puerto ${port}`);
+  logger.info(`RabbitMQ conectado y listo para usar en su UI http://localhost:15672.`);
 });

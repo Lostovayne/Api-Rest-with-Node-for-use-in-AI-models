@@ -4,6 +4,7 @@ import {
   GenerateContentResponse,
   GoogleGenAI,
   Modality,
+  TaskType, // Add TaskType
   Type,
 } from "@google/genai";
 
@@ -24,13 +25,25 @@ export const generateText = async (prompt: string): Promise<string> => {
   return response.text ?? "";
 };
 
-export const generateEmbedding = async (text: string): Promise<number[]> => {
+export const generateEmbedding = async (
+  text: string,
+  task: TaskType
+): Promise<number[]> => {
   const ai = getGenAI();
+
   const response = await ai.models.embedContent({
-    model: "text-embedding-004",
-    content: text,
+    model: 'gemini-embedding-001',
+    contents: [text], // Pass as an array of one string
+    taskType: task,
   });
-  return response.embedding.values;
+
+  const embeddings = response.embeddings; // Expect plural embeddings
+
+  if (!embeddings || embeddings.length === 0) {
+    throw new Error("Failed to generate embedding.");
+  }
+
+  return embeddings[0].values; // Return the first (and only) embedding
 };
 
 export const analyzeImage = async (

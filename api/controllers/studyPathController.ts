@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import pool from "../../db";
-import { generateText, generateEmbedding } from "../../services/geminiService";
+import { queueService } from "../../services/queueService";
+import { rabbitmqConfig } from "../../config/rabbitmq.config";
 import { generateImageFromGroq } from "../../services/grokService";
 
 export const createStudyPath = async (req: Request, res: Response) => {
@@ -11,61 +12,24 @@ export const createStudyPath = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "El tema es requerido" });
     }
 
-    const prompt = `Crea una ruta de estudio detallada, paso a paso, para aprender ${topic}. 
-        La ruta debe ser adecuada para un principiante y debe incluir los temas principales, subtemas y una breve descripción de cada uno.
-        Por favor, formatea la salida como un objeto JSON con una clave "studyPath", que es un array de objetos, cada uno con las claves "title", "description" y "subtopics" (un array de strings).`;
+    // Define the task payload
+    const task = {
+      taskType: 'generateStudyPath',
+      payload: { topic },
+    };
 
-    const result = await generateText(prompt);
+    // Send the task to the queue
+    await queueService.sendToQueue(rabbitmqConfig.queues.taskQueue, JSON.stringify(task));
 
-    const cleanedResult = result
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    // Respond immediately to the user
+    res.status(202).json({ 
+      message: "Solicitud para generar la ruta de estudio ha sido encolada.",
+      topic: topic 
+    });
 
-    try {
-      const jsonResponse = JSON.parse(cleanedResult);
-
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        const studyPathResult = await client.query(
-          "INSERT INTO study_paths (topic) VALUES ($1) RETURNING id",
-          [topic]
-        );
-        const studyPathId = studyPathResult.rows[0].id;
-
-        for (const module of jsonResponse.studyPath) {
-          // Create a single text block for embedding
-          const textToEmbed = `Title: ${module.title}\nDescription: ${module.description}\nSubtopics: ${module.subtopics.join(', ')}`;
-
-          // Generate the embedding
-          const embedding = await generateEmbedding(textToEmbed);
-
-          await client.query(
-            "INSERT INTO study_path_modules (study_path_id, title, description, subtopics, embedding) VALUES ($1, $2, $3, $4, $5)",
-            [studyPathId, module.title, module.description, module.subtopics, `[${embedding.join(',')}]`]
-          );
-        }
-
-        await client.query("COMMIT");
-        res.status(201).json({ studyPathId });
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
-      } finally {
-        client.release();
-      }
-    } catch (e) {
-      req.log.error(e, "Error al parsear JSON del modelo o guardar en DB:");
-      res
-        .status(500)
-        .json({
-          error: "Error al parsear la ruta de estudio del modelo o guardarla en la base de datos",
-        });
-    }
   } catch (error) {
-    req.log.error(error, "Error al generar la ruta de estudio");
-    res.status(500).json({ error: "Error al generar la ruta de estudio" });
+    req.log.error(error, "Error al encolar la generación de la ruta de estudio");
+    res.status(500).json({ error: "Error al encolar la generación de la ruta de estudio" });
   }
 };
 
