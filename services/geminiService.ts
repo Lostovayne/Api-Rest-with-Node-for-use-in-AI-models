@@ -4,7 +4,6 @@ import {
   GenerateContentResponse,
   GoogleGenAI,
   Modality,
-  TaskType, // Add TaskType
   Type,
 } from "@google/genai";
 
@@ -25,22 +24,22 @@ export const generateText = async (prompt: string): Promise<string> => {
   return response.text ?? "";
 };
 
-export const generateEmbedding = async (
-  text: string,
-  task: TaskType
-): Promise<number[]> => {
+export const generateEmbedding = async (text: string): Promise<number[]> => {
   const ai = getGenAI();
 
   const response = await ai.models.embedContent({
-    model: 'gemini-embedding-001',
+    model: "gemini-embedding-001",
     contents: [text], // Pass as an array of one string
-    taskType: task,
   });
 
   const embeddings = response.embeddings; // Expect plural embeddings
 
   if (!embeddings || embeddings.length === 0) {
     throw new Error("Failed to generate embedding.");
+  }
+
+  if (!embeddings[0].values) {
+    throw new Error("No embedding values returned.");
   }
 
   return embeddings[0].values; // Return the first (and only) embedding
@@ -85,7 +84,9 @@ export const generateImage = async (prompt: string): Promise<string> => {
   return `data:image/png;base64,${base64ImageBytes}`;
 };
 
-export const textToSpeech = async (prompt: string): Promise<{ audioBase64: string; mimeType: string }> => {
+export const textToSpeech = async (
+  prompt: string
+): Promise<{ audioBase64: string; mimeType: string }> => {
   const ai = getGenAI();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
@@ -147,7 +148,8 @@ const taskToolDeclarations: FunctionDeclaration[] = [
     name: "get_daily_recommendations",
     parameters: {
       type: Type.OBJECT,
-      description: "Obtiene recomendaciones sobre qué aprender o hacer hoy, basado en las tareas pendientes del usuario.",
+      description:
+        "Obtiene recomendaciones sobre qué aprender o hacer hoy, basado en las tareas pendientes del usuario.",
       properties: {},
     },
   },
@@ -218,8 +220,7 @@ export const connectLive = (callbacks: any): Promise<any> => {
       speechConfig: {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
       },
-      systemInstruction:
-        "Eres una IA conversacional amigable y útil. Mantén tus respuestas concisas.",
+      systemInstruction: "Eres una IA conversacional amigable y útil. Mantén tus respuestas concisas.",
     },
   });
 };
