@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import pool from '../db';
-import { checkModuleCompletionAchievements } from '../services/achievementService';
+import pool from '../../db';
+import { checkModuleCompletionAchievements } from '../../services/achievementService';
 
 export const completeModule = async (req: Request, res: Response) => {
   const { userId, moduleId } = req.body; // Assuming userId and moduleId are sent in the body

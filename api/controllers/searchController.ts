@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { searchModules } from '../services/searchService';
+import { searchModules } from '../../services/searchService';
 
 export const search = async (req: Request, res: Response) => {
   const { q } = req.query;

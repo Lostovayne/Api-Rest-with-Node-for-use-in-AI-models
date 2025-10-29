@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import pool from "../db";
-import { generateText, generateEmbedding } from "../services/geminiService";
-import { generateImageFromGroq } from "../services/grokService";
+import pool from "../../db";
+import { generateText, generateEmbedding } from "../../services/geminiService";
+import { generateImageFromGroq } from "../../services/grokService";
 
 export const createStudyPath = async (req: Request, res: Response) => {
   try {

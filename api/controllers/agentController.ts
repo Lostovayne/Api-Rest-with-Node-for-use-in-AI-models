@@ -1,7 +1,7 @@
 import { FunctionCall } from "@google/genai"; // Import FunctionCall
 import { Request, Response } from "express";
-import { useTools, groundWithSearch } from "../services/geminiService"; // Import groundWithSearch
-import { addTask, getTasks, updateTaskStatus, getDailyRecommendations } from "../services/taskService"; // Import getDailyRecommendations
+import { useTools, groundWithSearch } from "../../services/geminiService"; // Import groundWithSearch
+import { addTask, getTasks, updateTaskStatus, getDailyRecommendations } from "../../services/taskService"; // Import getDailyRecommendations
 
 export const agentController = async (req: Request, res: Response) => {
   try {

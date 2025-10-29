@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { generateQuizForModule } from '../services/quizService';
-import pool from '../db';
+import { generateQuizForModule } from '../../services/quizService';
+import pool from '../../db';
 
 interface UserAnswer {
     questionId: number;

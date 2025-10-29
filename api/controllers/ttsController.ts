@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { textToSpeech } from '../services/geminiService';
+import { textToSpeech } from '../../services/geminiService';
 
 export const ttsController = async (req: Request, res: Response) => {
     try {

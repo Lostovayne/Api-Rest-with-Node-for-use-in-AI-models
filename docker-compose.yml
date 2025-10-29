@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg16
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -11,5 +11,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  rabbitmq:
+    image: rabbitmq:4.1.4-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # Port for AMQP protocol
+      - "15672:15672" # Port for Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+
 volumes:
   postgres_data:
+  rabbitmq_data:

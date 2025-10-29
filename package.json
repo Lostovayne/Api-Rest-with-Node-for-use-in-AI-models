@@ -2,11 +2,11 @@
   "name": "ia",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/api/server.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
-    "dev": "ts-node-dev --respawn --transpile-only app.ts",
+    "start": "node dist/api/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only api/server.ts",
     "generate-embeddings": "ts-node scripts/generateEmbeddings.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,11 +29,13 @@
     "pg": "^8.16.3",
     "pino": "^10.1.0",
     "pino-http": "^11.0.0",
-    "pino-pretty": "^13.1.2"
+    "pino-pretty": "^13.1.2",
+    "amqplib": "^0.10.4"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/amqplib": "^0.10.5"
   }
 }

@@ -1,10 +1,11 @@
 import * as dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import { createTables, seedDatabase } from "./db";
+import { createTables, seedDatabase } from "../db"; // Adjusted path
+import { queueService } from '../services/queueService';
 import routes from "./routes";
 
 import { logger, pinoHttpMiddleware } from "./middlewares/logger";
-import { corsMiddleware, helmetMiddleware, rateLimitMiddleware } from "./middlewares/security"; //
+import { corsMiddleware, helmetMiddleware, rateLimitMiddleware } from "./middlewares/security";
 
 dotenv.config();
 
@@ -32,5 +33,6 @@ app.use("/", routes);
 app.listen(port, async () => {
   await createTables();
   await seedDatabase();
+  await queueService.connect();
   logger.info(`El servidor está corriendo en el puerto ${port}`);
 });
