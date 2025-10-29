@@ -8,8 +8,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./node_modules/@types", "types"]
+    "typeRoots": ["./node_modules/@types", "./api/types"]
   },
-  "include": ["services", "utils", "types/**/*.d.ts"],
+  "include": ["db.ts", "services/**/*.ts", "utils/**/*.ts", "api/**/*.ts", "scripts/**/*.ts", "config/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
