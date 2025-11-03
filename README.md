@@ -30,7 +30,7 @@ graph TD
     E(Worker) -->|Consume tarea| D
     E -->|Procesa| F[Gemini/Groq/DB]
     F -->|Guarda resultado| G[PostgreSQL + pgvector]
-    B <--|Consulta resultado| G
+    B -->|Consulta resultado| G
 ```
 
 ---
