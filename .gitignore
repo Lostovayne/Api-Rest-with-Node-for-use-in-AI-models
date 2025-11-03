@@ -9,5 +9,4 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .vscode-test
-package-lock.json
 .pnpm-store
