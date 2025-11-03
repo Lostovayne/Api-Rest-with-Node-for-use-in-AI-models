@@ -15,6 +15,20 @@ export const createTables = async () => {
   const client = await pool.connect();
   try {
     await client.query('CREATE EXTENSION IF NOT EXISTS vector;');
+    await client.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS tts_jobs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          status VARCHAR(50) NOT NULL DEFAULT 'pending',
+          text_content TEXT NOT NULL,
+          audio_base64 TEXT,
+          mime_type VARCHAR(100),
+          error_message TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          completed_at TIMESTAMP WITH TIME ZONE
+      );
+    `);
 
     await client.query(`
             CREATE TABLE IF NOT EXISTS study_paths (

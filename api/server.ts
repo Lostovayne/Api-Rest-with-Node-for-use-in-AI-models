@@ -1,18 +1,21 @@
 import * as dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import { createTables, seedDatabase } from "../db"; // Adjusted path
 import { queueService } from "../services/queueService";
+import { logger } from "./middlewares/logger";
+import {
+  corsMiddleware,
+  helmetMiddleware,
+  rateLimitMiddleware,
+} from "./middlewares/security";
 import routes from "./routes";
-
-import { logger, pinoHttpMiddleware } from "./middlewares/logger";
-import { corsMiddleware, helmetMiddleware, rateLimitMiddleware } from "./middlewares/security";
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(pinoHttpMiddleware);
+// app.use(pinoHttpMiddleware); // Evitar ruido en la consola de momento
 
 // Security Middleware
 app.use(corsMiddleware);
@@ -35,5 +38,7 @@ app.listen(port, async () => {
   await seedDatabase();
   await queueService.connect();
   logger.info(`El servidor está corriendo en el puerto ${port}`);
-  logger.info(`RabbitMQ conectado y listo para usar en su UI http://localhost:15672.`);
+  logger.info(
+    `RabbitMQ conectado y listo para usar en su UI http://localhost:15672.`,
+  );
 });

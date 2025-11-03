@@ -1,5 +1,6 @@
-import pool from '../db';
-import { generateText } from './geminiService';
+import pool from "../db";
+import { generateStructuredText } from "./geminiService";
+import { Type } from "@google/genai";
 
 interface QuizQuestion {
   question_text: string;
@@ -12,80 +13,75 @@ interface GeneratedQuiz {
   questions: QuizQuestion[];
 }
 
+// Define the schema for the quiz response
+const quizSchema = {
+  type: Type.OBJECT,
+  properties: {
+    title: { type: Type.STRING },
+    questions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question_text: { type: Type.STRING },
+          options: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          correct_option_index: { type: Type.NUMBER },
+        },
+        required: ["question_text", "options", "correct_option_index"],
+      },
+    },
+  },
+  required: ["title", "questions"],
+};
+
 export const generateQuizForModule = async (moduleId: number) => {
   // 1. Get Module Content
   const moduleResult = await pool.query(
-    'SELECT title, description, subtopics FROM study_path_modules WHERE id = $1',
-    [moduleId]
+    "SELECT title, description, subtopics FROM study_path_modules WHERE id = $1",
+    [moduleId],
   );
 
   if (moduleResult.rows.length === 0) {
-    throw new Error('Module not found');
+    throw new Error("Module not found");
   }
 
   const module = moduleResult.rows[0];
 
   // 2. Construct Prompt
   const prompt = `
-    Based on the following study module content, generate a multiple-choice quiz with 5 questions.
+    Eres un experto creando contenido educativo en español.
+    Basado en el siguiente contenido de un módulo de estudio, DEBES generar un cuestionario de opción múltiple con EXACTAMENTE 5 preguntas en español.
 
-    Module Title: ${module.title}
-    Module Description: ${module.description}
-    Module Subtopics: ${module.subtopics.join(', ')}
+    **Contenido del Módulo:**
+    - **Título:** ${module.title}
+    - **Descripción:** ${module.description}
+    - **Subtemas:** ${module.subtopics.join(", ")}
 
-    The quiz should test the key concepts from the module.
-
-    Please return the quiz in a single, minified JSON object with no extra text or explanations. The JSON object should have the following structure:
-    {
-      "title": "Quiz for ${module.title}",
-      "questions": [
-        {
-          "question_text": "...",
-          "options": ["...", "...", "...", "..."],
-          "correct_option_index": 0
-        },
-        {
-          "question_text": "...",
-          "options": ["...", "...", "...", "..."],
-          "correct_option_index": 1
-        },
-        {
-          "question_text": "...",
-          "options": ["...", "...", "...", "..."],
-          "correct_option_index": 2
-        },
-        {
-          "question_text": "...",
-          "options": ["...", "...", "...", "..."],
-          "correct_option_index": 3
-        },
-        {
-          "question_text": "...",
-          "options": ["...", "...", "...", "..."],
-          "correct_option_index": 0
-        }
-      ]
-    }
+    **Instrucciones:**
+    1. El cuestionario debe evaluar los conceptos clave del módulo.
+    2. Cada pregunta debe tener 4 opciones distintas.
+    3. Todo el texto, incluyendo preguntas, opciones y el título del quiz, DEBE estar en español.
   `;
 
-  // 3. Call Gemini
-  const generatedJson = await generateText(prompt);
+  // 3. Call Gemini with the structured schema
+  const generatedJson = await generateStructuredText(prompt, quizSchema);
 
   // 4. Parse and Validate
   let quizData: GeneratedQuiz;
   try {
-    // The response might have markdown backticks, remove them
-    const cleanedJson = generatedJson.replace(/```json/g, '').replace(/```/g, '').trim();
-    quizData = JSON.parse(cleanedJson);
+    quizData = JSON.parse(generatedJson);
   } catch (error) {
-    console.error('Error parsing quiz JSON from Gemini:', error);
-    console.error('Received JSON string:', generatedJson);
-    throw new Error('Failed to parse quiz data from AI.');
+    console.error("Error parsing quiz JSON from Gemini:", error);
+    console.error("Received JSON string:", generatedJson);
+    throw new Error("Failed to parse quiz data from AI, despite schema enforcement.");
   }
 
-  // Basic validation
-  if (!quizData.title || !quizData.questions || quizData.questions.length === 0) {
-    throw new Error('Invalid quiz data structure from AI.');
+  // Add a final validation check to ensure questions are not empty
+  if (!quizData.questions || quizData.questions.length === 0) {
+    throw new Error("AI returned a quiz with no questions.");
   }
 
   const client = await pool.connect();

@@ -1,43 +1,75 @@
-import amqp, { Channel, Connection } from 'amqplib';
+import { connect, Channel } from 'amqplib';
 import { rabbitmqConfig } from '../config/rabbitmq.config';
 
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 5000; // 5 seconds
+
 class QueueService {
-  private connection: Connection | null = null;
+  private connection: any | null = null;
   private channel: Channel | null = null;
 
   async connect() {
-    if (this.connection && this.channel) {
+    if (this.channel) {
       return;
     }
 
-    try {
-      console.log('Connecting to RabbitMQ...');
-      this.connection = await amqp.connect(rabbitmqConfig.url);
-      this.channel = await this.connection.createChannel();
+    let attempts = 0;
+    while (attempts < MAX_RETRIES) {
+      try {
+        console.log(`Attempting to connect to RabbitMQ... (${attempts + 1}/${MAX_RETRIES})`);
+        this.connection = await connect(rabbitmqConfig.url);
 
-      // Assert the queue to ensure it exists
-      await this.channel.assertQueue(rabbitmqConfig.queues.taskQueue, {
-        durable: true, // The queue will survive a broker restart
-      });
+        this.connection.on('error', (err: Error) => {
+          console.error('RabbitMQ connection error', err);
+          this.connection = null;
+          this.channel = null;
+        });
 
-      console.log('Successfully connected to RabbitMQ and queue is asserted.');
-    } catch (error) {
-      console.error('Failed to connect to RabbitMQ:', error);
-      // Implement retry logic or exit gracefully
-      throw error;
+        this.connection.on('close', () => {
+          console.warn('RabbitMQ connection closed. Reconnecting...');
+          this.connection = null;
+          this.channel = null;
+          setTimeout(() => this.connect(), RETRY_DELAY);
+        });
+
+        this.channel = await this.connection.createChannel();
+
+        await this.channel!.assertQueue(rabbitmqConfig.queues.taskQueue, {
+          durable: true,
+        });
+
+        console.log('Successfully connected to RabbitMQ and queue is asserted.');
+        return; // Exit loop on successful connection
+
+      } catch (error) {
+        attempts++;
+        console.error(`Failed to connect to RabbitMQ (attempt ${attempts}):`, error);
+        if (attempts >= MAX_RETRIES) {
+          throw new Error('Could not connect to RabbitMQ after multiple retries.');
+        }
+        await new Promise(res => setTimeout(res, RETRY_DELAY));
+      }
     }
   }
 
   async sendToQueue(queue: string, message: string) {
     if (!this.channel) {
-      throw new Error('No RabbitMQ channel available. Please connect first.');
+      // This could happen if the connection is lost and not yet re-established.
+      // A more advanced implementation could queue messages internally.
+      console.error('No RabbitMQ channel available. Message was not sent.');
+      throw new Error('RabbitMQ channel is not available.');
     }
 
-    // The message is sent as a Buffer
-    this.channel.sendToQueue(queue, Buffer.from(message), {
-      persistent: true, // The message will be saved to disk
-    });
-    console.log(`Message sent to queue "${queue}": ${message}`);
+    try {
+        this.channel.sendToQueue(queue, Buffer.from(message), {
+            persistent: true,
+        });
+        console.log(`Message sent to queue "${queue}": ${message}`);
+    } catch (error) {
+        console.error('Failed to send message to RabbitMQ:', error);
+        // Handle channel/connection errors during send
+        throw error;
+    }
   }
 
   getChannel(): Channel {

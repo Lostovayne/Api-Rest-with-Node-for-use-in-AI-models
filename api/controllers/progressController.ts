@@ -24,7 +24,8 @@ export const completeModule = async (req: Request, res: Response) => {
       progress: result.rows[0],
       newly_awarded_achievements: newlyAwarded,
     });
-  } catch (error) {
+  } catch (e) {
+    const error = e as any;
     console.error('Error completing module:', error);
     // Handle potential unique constraint violation if the user already completed the module
     if (error.code === '23505') { // unique_violation

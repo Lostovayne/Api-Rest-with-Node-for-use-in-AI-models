@@ -15,12 +15,25 @@ const getGenAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export const generateText = async (prompt: string): Promise<string> => {
+export const generateStructuredText = async (
+  prompt: string,
+  responseSchema: any | null = null,
+): Promise<string> => {
   const ai = getGenAI();
+
+  const config: any = {};
+
+  if (responseSchema) {
+    config.responseMimeType = "application/json";
+    config.responseSchema = responseSchema;
+  }
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: prompt,
+    config,
   });
+
   return response.text ?? "";
 };
 

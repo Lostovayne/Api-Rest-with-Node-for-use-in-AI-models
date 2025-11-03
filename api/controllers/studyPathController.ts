@@ -73,49 +73,23 @@ export const getStudyPathModule = async (req: Request, res: Response) => {
 export const generateImagesForPath = async (req: Request, res: Response) => {
   try {
     const { studyPathId } = req.body;
-    req.log.info(`Solicitud recibida para generar imágenes para studyPathId: ${studyPathId}`);
+    req.log.info(`Request received to generate images for studyPathId: ${studyPathId}`);
 
     if (!studyPathId) {
-      return res.status(400).json({ error: "El studyPathId es requerido" });
+      return res.status(400).json({ error: "studyPathId is required" });
     }
 
-    const client = await pool.connect();
-    try {
-      req.log.info("Consultando módulos...");
-      const modulesResult = await client.query(
-        "SELECT * FROM study_path_modules WHERE study_path_id = $1",
-        [studyPathId]
-      );
-      const modules = modulesResult.rows;
-      req.log.info(`Se encontraron ${modules.length} módulos.`);
+    const task = {
+      taskType: "generateImages",
+      payload: { studyPathId },
+    };
 
-      for (const module of modules) {
-        if (!module.image_url) {
-          const imagePrompt = `Crea un ícono 3D moderno y tierno para un capítulo titulado "${module.title}". El ícono debe ser simple, limpio y representar el tema del capítulo.`;
-          req.log.info(
-            `Generando imagen para el módulo: "${module.title}" con el prompt: "${imagePrompt}"`
-          );
+    await queueService.sendToQueue(rabbitmqConfig.queues.taskQueue, JSON.stringify(task));
 
-          const imageUrl = await generateImageFromGroq(imagePrompt);
-          req.log.info(`URL de la imagen generada: ${imageUrl}`);
+    res.status(202).json({ message: "Image generation task has been queued." });
 
-          req.log.info(`Actualizando la base de datos para el módulo ID: ${module.id}`);
-          await client.query("UPDATE study_path_modules SET image_url = $1 WHERE id = $2", [
-            imageUrl,
-            module.id,
-          ]);
-          req.log.info("Base de datos actualizada correctamente.");
-        } else {
-          req.log.info(`La imagen para el módulo "${module.title}" ya existe. Omitiendo.`);
-        }
-      }
-
-      res.json({ message: "Imágenes generadas y actualizadas correctamente" });
-    } finally {
-      client.release();
-    }
   } catch (error) {
-    req.log.error(error, "Error en /generate-images-for-path:");
-    res.status(500).json({ error: "Error al generar las imágenes para la ruta de estudio" });
+    req.log.error(error, "Error queueing image generation task");
+    res.status(500).json({ error: "Error queueing image generation task" });
   }
 };

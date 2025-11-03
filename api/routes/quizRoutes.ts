@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { getQuizForModule, submitQuiz, getUserPerformance } from '../controllers/quizController';
+import { generateQuizForModuleController, submitQuiz, getUserPerformance } from '../controllers/quizController';
 
 const router = Router();
 
-// Route to generate and get a quiz for a module
-router.get('/modules/:moduleId/quiz', getQuizForModule);
+// Route to trigger quiz generation for a module
+router.post('/modules/:moduleId/quiz', generateQuizForModuleController);
 
 // Route to submit answers to a quiz
 router.post('/quizzes/:quizId/submit', submitQuiz);

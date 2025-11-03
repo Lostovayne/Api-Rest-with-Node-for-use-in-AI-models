@@ -1,0 +1,15 @@
+# Evita que estos archivos y carpetas se copien al contexto de build de Docker
+
+.git
+.gitignore
+.dockerignore
+
+# Dependencias que se instalarán dentro del contenedor
+node_modules
+
+# Carpeta de salida de la compilación (se genera dentro del build)
+dist
+
+# Archivos de log y entorno
+*.log
+.env

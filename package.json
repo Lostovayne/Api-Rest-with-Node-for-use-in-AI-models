@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/api/server.js",
-    "dev:all": "concurrently \"npm:dev\" \"npm:start:worker\"",
-    "dev": "ts-node-dev --respawn --transpile-only api/server.ts",
+    "dev": "concurrently \"npm:developer\" \"npm:start:worker\"",
+    "developer": "ts-node-dev --respawn --transpile-only api/server.ts",
     "start:worker": "ts-node-dev --respawn --transpile-only workers/consumers/tasks.consumer.ts",
     "generate-embeddings": "ts-node scripts/generateEmbeddings.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
