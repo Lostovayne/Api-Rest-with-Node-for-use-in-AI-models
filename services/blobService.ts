@@ -1,7 +1,6 @@
-import { put } from '@vercel/blob';
-import { VercelBlobResponse } from '@vercel/blob';
+import { put, type PutBlobResult } from '@vercel/blob';
 
-export async function uploadAudioBlob(filename: string, audioBuffer: Buffer, contentType: string): Promise<VercelBlobResponse> {
+export async function uploadAudioBlob(filename: string, audioBuffer: Buffer, contentType: string): Promise<PutBlobResult> {
   try {
     const blob = await put(filename, audioBuffer, {
       access: 'public',
