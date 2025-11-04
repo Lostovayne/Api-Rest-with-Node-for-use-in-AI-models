@@ -22,8 +22,7 @@ export const createTables = async () => {
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           status VARCHAR(50) NOT NULL DEFAULT 'pending',
           text_content TEXT NOT NULL,
-          audio_base64 TEXT,
-          mime_type VARCHAR(100),
+          audio_url TEXT,
           error_message TEXT,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           completed_at TIMESTAMP WITH TIME ZONE
@@ -139,6 +138,11 @@ export const createTables = async () => {
 
     // Alter table after it has been created
     await client.query('ALTER TABLE study_path_modules ADD COLUMN IF NOT EXISTS embedding vector(3072);');
+
+    // Migration for tts_jobs table to use Vercel Blob
+    await client.query('ALTER TABLE tts_jobs ADD COLUMN IF NOT EXISTS audio_url TEXT;');
+    await client.query('ALTER TABLE tts_jobs DROP COLUMN IF EXISTS audio_base64;');
+    await client.query('ALTER TABLE tts_jobs DROP COLUMN IF EXISTS mime_type;');
   } finally {
     client.release();
   }

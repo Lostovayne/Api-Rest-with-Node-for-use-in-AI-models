@@ -62,10 +62,7 @@ export const getTtsJob = async (req: Request, res: Response) => {
             status: job.status,
             createdAt: job.created_at,
             completedAt: job.completed_at,
-            audio: {
-                base64: job.audio_base64,
-                mimeType: job.mime_type,
-            }
+            audioUrl: job.audio_url
         });
 
     } catch (error) {
