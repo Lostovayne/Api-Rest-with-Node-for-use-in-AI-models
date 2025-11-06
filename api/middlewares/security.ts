@@ -2,6 +2,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
+// TODO: En producción, configurar un origen específico para el frontend.
+// Por ejemplo:
+// const corsOptions = {
+//   origin: 'https://mi-frontend.com',
+//   optionsSuccessStatus: 200
+// };
+// export const corsMiddleware = cors(corsOptions);
+
 // CORS Middleware
 export const corsMiddleware = cors();
 

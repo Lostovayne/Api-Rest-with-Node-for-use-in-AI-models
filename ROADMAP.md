@@ -21,10 +21,10 @@ Este documento describe la hoja de ruta para el desarrollo de **Ritmo**, una apl
             1. Decodifique el audio de Base64 a un buffer.
             2. Llame al `blobService` para subir el buffer.
             3. Guarde la URL devuelta por el `blobService` en la columna `audio_url` de la tabla `tts_jobs`.
-- [ ] **Revisión de Estándares de Producción**
-    - [ ] Analizar la configuración de seguridad actual (Helmet, CORS, Rate Limiting) y proponer mejoras si es necesario.
-    - [ ] Verificar que el logging sea consistente y provea suficiente información en un entorno de producción.
-    - [ ] Revisar el `Dockerfile` y el workflow de GitHub Actions para asegurar que siguen las mejores prácticas.
+- [x] **Revisión de Estándares de Producción**
+    - [x] Analizar la configuración de seguridad actual (Helmet, CORS, Rate Limiting) y proponer mejoras si es necesario.
+    - [x] Verificar que el logging sea consistente y provea suficiente información en un entorno de producción.
+    - [x] Revisar el `Dockerfile` y el workflow de GitHub Actions para asegurar que siguen las mejores prácticas.
 
 ---
 

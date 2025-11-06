@@ -15,13 +15,22 @@ services:
     image: rabbitmq:4.1.4-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"  # Port for AMQP protocol
+      - "5672:5672" # Port for AMQP protocol
       - "15672:15672" # Port for Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+  # TypeSense
+# typesense:
+#   image: typesense/typesense:29.0
+#   restart: on-failure
+#   ports:
+#     - "8108:8108"
+#   volumes:
+#     - ./typesense-data:/data
+#   command: '--data-dir /data --api-key=xyz --enable-cors'
 
 volumes:
   postgres_data:
