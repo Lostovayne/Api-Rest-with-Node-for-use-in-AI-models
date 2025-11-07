@@ -1,12 +1,13 @@
-import { Router } from 'express';
-import { createTtsJob, getTtsJob } from '../controllers/ttsController';
+import { Router } from "express";
+import { createTtsJob, getTtsJob, listTtsJobs } from "../controllers/ttsController";
 
 const router = Router();
 
 // Route to create a new TTS job
-router.post('/text-to-speech', createTtsJob);
+router.post("/text-to-speech", createTtsJob);
 
 // Route to get the status and result of a TTS job
-router.get('/text-to-speech/:jobId', getTtsJob);
+router.get("/text-to-speech", listTtsJobs);
+router.get("/text-to-speech/:jobId", getTtsJob);
 
 export default router;
