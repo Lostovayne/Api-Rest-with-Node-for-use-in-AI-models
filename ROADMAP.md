@@ -30,13 +30,19 @@ Este documento describe la hoja de ruta para el desarrollo de **Ritmo**, una apl
 
 ## 🎮 Fase 2: Engagement del Usuario (Gamificación y Tiempo Real)
 
-*Objetivo: Aumentar la interacción y retención del usuario mediante sistemas de recompensa y notificaciones instantáneas.*
+*Objetivo: Aumentar la interacción y retención del usuario mediante sistemas de recompensa, búsqueda avanzada y notificaciones instantáneas.*
 
-- [ ] **Implementación de Notificaciones en Tiempo Real (WebSockets)**
-    - [ ] Crear un nuevo servicio de WebSockets (ej. usando la librería `ws`).
-    - [ ] El cliente se conectará y suscribirá a eventos usando los `jobId` de las tareas asíncronas.
-    - [ ] Modificar los workers (`quiz`, `tts`, `images`) para que, al finalizar una tarea, publiquen un evento en RabbitMQ.
-    - [ ] El servicio de WebSockets escuchará estos eventos y notificará al cliente correspondiente en tiempo real.
+- [ ] **Implementación de Notificaciones Push (Firebase Cloud Messaging)**
+    - [ ] **Configuración de Firebase:**
+        - [ ] Crear un proyecto en Firebase y configurar una aplicación Android.
+        - [ ] Generar y guardar las credenciales del SDK de Admin de Firebase de forma segura.
+    - [ ] **Implementación del Lado del Servidor:**
+        - [ ] Instalar el SDK de Admin de Firebase (`firebase-admin`).
+        - [ ] Crear un nuevo servicio para manejar el envío de notificaciones a través de FCM.
+        - [ ] Modificar los workers para que, al finalizar una tarea, envíen una notificación push al dispositivo del usuario.
+    - [ ] **Integración con el Cliente Android:**
+        - [ ] El cliente Android (Kotlin) deberá implementar el SDK de cliente de FCM para recibir y mostrar las notificaciones.
+        - [ ] El cliente deberá enviar su token de registro de dispositivo (FCM token) al backend para que este sepa a dónde enviar las notificaciones.
 - [ ] **Expansión del Sistema de Gamificación**
     - [ ] **Integración de Redis:**
         - [ ] Añadir Redis al stack. Usar una instancia local en desarrollo (Docker) y un servicio gestionado en producción (Railway/Upstash).
@@ -46,6 +52,12 @@ Este documento describe la hoja de ruta para el desarrollo de **Ritmo**, una apl
         - [ ] Crear nuevos endpoints en la API para consultar estos leaderboards.
     - [ ] **Sistema de Rachas (Streaks):**
         - [ ] Usar Redis para almacenar la última fecha de actividad de un usuario y calcular las rachas de estudio diarias.
+- [▶️] **Motor de Búsqueda de Texto (Typesense)**
+    - [▶️] **Despliegue y Configuración:**
+        - [x] Desplegar una imagen de Docker de Typesense en Railway para el entorno de producción.
+        - [ ] Evaluar y configurar el cliente de Typesense Cloud como alternativa o complemento, aprovechando su capa gratuita.
+    - [ ] **Implementación:**
+        - [ ] Integrar **Typesense** para ofrecer búsqueda por palabra clave instantánea y avanzada sobre los módulos de estudio y otros recursos.
 
 ---
 
@@ -73,10 +85,8 @@ Este documento describe la hoja de ruta para el desarrollo de **Ritmo**, una apl
 
 ## 🚀 Fase 4: Expansión de Servicios Base
 
-*Objetivo: Integrar servicios especializados para potenciar las capacidades de búsqueda, IA y tareas automatizadas.*
+*Objetivo: Integrar servicios especializados para potenciar las capacidades de IA y tareas automatizadas.*
 
-- [ ] **Motor de Búsqueda de Texto (Typesense)**
-    - [ ] Investigar e integrar **Typesense** para ofrecer búsqueda por palabra clave instantánea y avanzada sobre los módulos de estudio y otros recursos.
 - [ ] **Base de Datos Vectorial Dedicada (Qdrant)**
     - [ ] Migrar de `pgvector` a **Qdrant** para mejorar el rendimiento y la escalabilidad de las búsquedas semánticas para el tutor de IA.
 - [ ] **Gestor de Tareas Programadas (Ofelia)**

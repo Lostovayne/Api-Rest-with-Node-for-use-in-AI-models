@@ -2,6 +2,7 @@ import { logger as mainLogger } from "../../api/middlewares/logger";
 import pool from "../../db";
 import { generateEmbedding, generateStructuredText } from "../../services/geminiService";
 import { Type } from "@google/genai";
+import { typesenseService } from "../../services/typesenseService";
 
 const taskLogger = mainLogger.child({ context: "GenerateStudyPathTask" });
 
@@ -45,6 +46,7 @@ export const handleGenerateStudyPath = async (payload: TaskPayload) => {
     const jsonResponse = JSON.parse(result);
 
     const client = await pool.connect();
+    const modulesToIndex = []; // Array to hold modules for indexing
     try {
       await client.query("BEGIN");
       const studyPathResult = await client.query(
@@ -59,17 +61,25 @@ export const handleGenerateStudyPath = async (payload: TaskPayload) => {
         }\nSubtopics: ${module.subtopics.join(", ")}`;
         const embedding = await generateEmbedding(textToEmbed);
 
-        await client.query(
-          "INSERT INTO study_path_modules (study_path_id, title, description, subtopics, embedding) VALUES ($1, $2, $3, $4, $5)",
+        const insertedModule = await client.query(
+          "INSERT INTO study_path_modules (study_path_id, title, description, subtopics, embedding) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, description, subtopics, image_url",
           [studyPathId, module.title, module.description, module.subtopics, `[${embedding.join(",")}]`]
         );
+
+        modulesToIndex.push({
+            ...insertedModule.rows[0],
+            study_path_id: studyPathId,
+        });
       }
 
       await client.query("COMMIT");
       taskLogger.info({ topic, studyPathId }, `Successfully generated and saved study path.`);
 
-      // TODO: Here we could trigger another task, e.g., to generate images for the new modules
-      // queueService.sendToQueue('image_generation_queue', JSON.stringify({ studyPathId }));
+      // Index modules in Typesense after successful commit
+      for (const module of modulesToIndex) {
+        await typesenseService.indexModule(module as any);
+      }
+
     } catch (e) {
       await client.query("ROLLBACK");
       taskLogger.error({ err: e, topic }, `Failed to save study path to DB.`);

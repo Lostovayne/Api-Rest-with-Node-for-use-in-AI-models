@@ -22,16 +22,26 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
-  # TypeSense
-# typesense:
-#   image: typesense/typesense:29.0
-#   restart: on-failure
-#   ports:
-#     - "8108:8108"
-#   volumes:
-#     - ./typesense-data:/data
-#   command: '--data-dir /data --api-key=xyz --enable-cors'
+
+  typesense:
+    image: typesense/typesense:29.0
+    container_name: typesense
+    restart: unless-stopped
+    ports:
+      - "${TYPESENSE_PORT:-8108}:8108"
+    volumes:
+      - typesense_data:/data
+    command: >-
+      --data-dir /data
+      --api-key=${TYPESENSE_API_KEY:-changeme}
+      --enable-cors
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
   rabbitmq_data:
+  typesense_data:
