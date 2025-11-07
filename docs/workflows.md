@@ -2,21 +2,25 @@
 
 ## Generacion de rutas de estudio
 
-1. `POST /study-path` recibe `topic` y publica un mensaje `generateStudyPath` en RabbitMQ.
+1. `POST /study-path` recibe `topic` y `userId`, valida los campos y publica un mensaje `generateStudyPath` en RabbitMQ.
 2. El worker `generate-study-path.task.ts` consulta Gemini:
-   - genera modulos estructurados
-   - genera embedding por modulo con `generateEmbedding`
-3. Guarda los datos en PostgreSQL dentro de una transaccion.
+
+- genera modulos estructurados
+- genera embeddings por modulo con `generateEmbedding`
+
+3. Persiste la ruta y los modulos en PostgreSQL dentro de una transaccion y actualiza `study_path_requests` con el `requestId` recibido.
 4. Tras confirmar, indexa cada modulo en Typesense via `typesenseService.indexModule`.
-5. El cliente debe consultar `GET /study-path/:id` para obtener los modulos generados.
+5. Finalmente encola automaticamente una tarea `generateImages` para poblar `image_url` de cada modulo.
+6. El cliente debe hacer polling con `GET /study-path-requests/:id` hasta que el estado sea `completed`. Cuando `study_path_id` exista puede listar modulos con `GET /study-paths` y `GET /study-paths/:id`.
 
 ## Generacion de imagenes para modulos
 
-1. `POST /generate-images-for-path` publica `generateImages` con `studyPathId`.
+1. El worker de rutas (`generate-study-path.task.ts`) encola una tarea `generateImages` tan pronto termina de crear la ruta.
 2. `generate-images.task.ts` recupera los modulos del path.
 3. Para cada modulo sin `image_url` llama a `generateImageFromGroq`.
 4. Actualiza la columna `image_url` con el link devuelto.
 5. Loggea el resultado y continua aun si algun modulo falla.
+6. El endpoint `POST /generate-images-for-path` permanece disponible para reenviar manualmente la tarea en caso de reintentos.
 
 ## Generacion de quizzes
 

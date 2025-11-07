@@ -1,173 +1,194 @@
 # Endpoints HTTP
 
-Referencia de los endpoints expuestos por la API Express. Todos aceptan y devuelven JSON.
+Referencia de los endpoints expuestos por la API Express. Todos aceptan y devuelven JSON con errores estructurados `{ "error": "mensaje" }`.
 
-## Estudio y modulos
+## Usuarios
+
+### POST /users
+
+- **Descripción**: Registra o reutiliza un usuario según `username`.
+- **Body**:
+  ```json
+  {
+    "username": "ada"
+  }
+  ```
+- **Respuestas**:
+  - `201 Created` con `{ id, username, created_at }` cuando se crea.
+  - `200 OK` con el mismo payload si ya existía.
+  - `400 Bad Request` si falta `username`.
+
+### GET /users/:userId
+
+- **Descripción**: Obtiene la información básica del usuario.
+- **Respuestas**:
+  - `200 OK` con `{ id, username, created_at }`.
+  - `404 Not Found` si el usuario no existe.
+
+## Rutas de estudio
 
 ### POST /study-path
 
-- **Descripcion**: Encola la generacion de una nueva ruta de estudio en base a un tema.
+- **Descripción**: Encola la generación de una ruta de estudio personalizada.
 - **Body**:
-
-```json
-{
-  "topic": "aprender redes neuronales"
-}
-```
-
+  ```json
+  {
+    "topic": "aprender redes neuronales",
+    "userId": 1
+  }
+  ```
 - **Respuestas**:
-  - `202 Accepted` si la tarea fue encolada.
-  - `400 Bad Request` si falta `topic`.
-- **Flujo**: publica un mensaje `generateStudyPath` en RabbitMQ. El worker genera modulos, los guarda en PostgreSQL e indexa cada modulo en Typesense.
+  - `202 Accepted` con `{ message, topic, requestId }` cuando la tarea fue encolada.
+  - `400 Bad Request` si falta `topic` o `userId`.
+- **Flujo**: crea un registro `study_path_requests` en estado `pending`, publica `generateStudyPath` y devuelve el `requestId` que se debe monitorear.
+
+### GET /study-path-requests/:requestId
+
+- **Descripción**: Devuelve el estado de la solicitud asincrona.
+- **Respuestas**:
+  - `200 OK` con `{ request, modules? }`. Cuando `request.study_path_id` está presente, incluye `modules` con `image_url`.
+  - `404 Not Found` si el identificador no existe.
+
+### GET /study-paths
+
+- **Descripción**: Lista rutas disponibles, más recientes primero.
+- **Query params**: `userId` (opcional) para filtrar.
+- **Respuesta**: `200 OK` con un arreglo de `{ id, user_id, topic, created_at }`.
 
 ### GET /study-path/:id
 
-- **Descripcion**: Obtiene todos los modulos pertenecientes a una ruta de estudio.
-- **Parametros**: `id` numerico del registro en `study_paths`.
-- **Respuesta** `200 OK`:
-
-```json
-[
-  {
-    "id": 12,
-    "study_path_id": 5,
-    "title": "Introduccion",
-    "description": "...",
-    "subtopics": ["conceptos basicos"],
-    "image_url": "https://..."
-  }
-]
-```
-
-- **Errores**: `500` si ocurre un problema de base de datos.
+- **Descripción**: Obtiene los módulos de una ruta específica.
+- **Respuesta**: `200 OK` con un arreglo de módulos que incluyen `image_url` cuando ya fue generada.
 
 ### GET /study-path-modules/:id
 
-- **Descripcion**: Devuelve un modulo especifico por `id`.
-- **Respuesta**: `200 OK` con el modulo o `404 Not Found` si no existe.
+- **Descripción**: Devuelve un módulo puntual.
+- **Respuestas**: `200 OK` con el módulo o `404 Not Found`.
 
 ### POST /generate-images-for-path
 
-- **Descripcion**: Encola la generacion de imagenes para todos los modulos de una ruta.
+- **Descripción**: Reencola manualmente la generación de imágenes (el flujo automático ya lo hace al crear la ruta).
 - **Body**:
+  ```json
+  {
+    "studyPathId": 5
+  }
+  ```
+- **Respuestas**: `202 Accepted` si se encola, `400` si falta `studyPathId`.
+- **Uso recomendado**: operaciones de soporte o reintentos manuales.
 
-```json
-{
-  "studyPathId": 5
-}
-```
-
-- **Respuestas**: `202 Accepted` si la tarea se encolo, `400` si falta `studyPathId`.
-- **Flujo**: publica `generateImages`; el worker consulta cada modulo y usa Groq para crear imagenes, actualizando la columna `image_url`.
-
-## Busqueda
+## Búsqueda
 
 ### GET /search?q=texto
 
-- **Descripcion**: Busqueda semantica mediante pgvector.
-- **Parametros**: query string `q`.
-- **Respuesta**: lista de modulos ordenados por afinidad con su distancia `distance`.
+- **Descripción**: Búsqueda semántica mediante pgvector.
+- **Respuesta**: lista de módulos con su distancia `distance`.
 
 ### GET /search/typesense?q=texto
 
-- **Descripcion**: Busqueda por palabra clave usando Typesense.
-- **Nota**: requiere tener Typesense en ejecucion y la coleccion `study_modules` sincronizada.
-
-## Agente de productividad
-
-### POST /agent
-
-- **Descripcion**: Pasa un `prompt` a Gemini, que puede llamar herramientas para gestionar tareas.
-- **Body**:
-
-```json
-{
-  "prompt": "Que deberia hacer hoy?"
-}
-```
-
-- **Respuestas**:
-  - `200 OK` con `{ "text": "..." }` cuando Gemini responde directamente.
-  - `200 OK` con `{ "toolResult": {...} }` cuando se ejecuta una funcion:
-    - `add_task`, `get_tasks`, `update_task_status`, `get_daily_recommendations`.
-  - `400` si faltan argumentos requeridos por la herramienta.
+- **Descripción**: Búsqueda por keyword usando Typesense sobre `study_modules`.
+- **Notas**: requiere que Typesense esté sincronizado (lo hace el worker al generar rutas).
 
 ## Texto a voz (TTS)
 
 ### POST /text-to-speech
 
-- **Descripcion**: Crea un trabajo TTS asincrono.
+- **Descripción**: Crea un trabajo TTS asincrono.
 - **Body**:
-
-```json
-{
-  "text": "contenido del modulo"
-}
-```
-
-- **Respuesta** `202 Accepted` con `{ "jobId": "uuid" }`.
-- **Flujo**: publica `generateTTS`; el worker genera audio con Gemini, lo sube a Vercel Blob y actualiza la fila `tts_jobs`.
+  ```json
+  {
+    "text": "contenido del modulo",
+    "userId": 1,
+    "moduleId": 23
+  }
+  ```
+- **Respuesta**: `202 Accepted` con `{ "jobId": "uuid" }`.
+- **Flujo**: publica `generateTTS`; el worker genera audio con Gemini y guarda `audio_url` en Vercel Blob.
 
 ### GET /text-to-speech/:jobId
 
-- **Descripcion**: Consulta el estado del trabajo.
+- **Descripción**: Consulta un trabajo puntual.
 - **Respuestas**:
-  - `200` con `status` (`pending`, `completed`, `failed`).
-  - Cuando `status == "completed"`, incluye `audioUrl`.
-  - `404` si el `jobId` no existe.
+  - `200 OK` con `status`, y cuando concluye agrega `audioUrl`, `moduleId`, `userId`.
+  - `404 Not Found` si no existe el ID.
 
-## Progreso y logros
+### GET /text-to-speech
 
-### POST /modules/complete
+- **Descripción**: Lista los trabajos recientes.
+- **Query params**: `userId`, `moduleId`, `status` (opcionales).
+- **Respuesta**: `200 OK` con hasta 50 trabajos ordenados por `created_at` descendente.
 
-- **Descripcion**: Marca un modulo como completado por un usuario.
-- **Body**:
-
-```json
-{
-  "userId": 1,
-  "moduleId": 23
-}
-```
-
-- **Respuesta** `201 Created` con la fila de progreso y logros otorgados.
-- **Errores**: `409` si ya estaba completado.
-
-### GET /users/:userId/progress
-
-- **Descripcion**: Retorna modulos completados y logros conseguidos por el usuario.
-
-### GET /users/:userId/dashboard
-
-- **Descripcion**: Resumen rapido (modulos completados, logros, proximo modulo, racha). Algunos campos son placeholders todavia.
-
-## Quizzes
+## Quizzes y módulos
 
 ### POST /modules/:moduleId/quiz
 
-- **Descripcion**: Encola la generacion de un quiz para un modulo.
-- **Flujo**: publica `generateQuiz`; el worker usa `quizService` para crear preguntas y opciones.
+- **Descripción**: Encola la generación de un quiz para el módulo.
+- **Flujo**: publica `generateQuiz`; el worker usa `quizService` y llena `quizzes` y `questions`.
+
+### GET /modules/:moduleId/quiz
+
+- **Descripción**: Obtiene el último quiz generado con sus preguntas.
+- **Respuestas**:
+  - `200 OK` con `{ quiz, questions }`.
+  - `404 Not Found` si aún no se generó.
 
 ### POST /quizzes/:quizId/submit
 
-- **Descripcion**: Registra respuestas a un quiz y calcula puntaje.
-- **Body** ejemplo:
+- **Descripción**: Registra respuestas del usuario y devuelve el puntaje.
+- **Body**:
+  ```json
+  {
+    "userId": 1,
+    "answers": [{ "questionId": 10, "selectedOptionIndex": 2 }]
+  }
+  ```
+- **Respuesta**: `200 OK` con `attemptId`, `score` y detalle de correcciones.
 
-```json
-{
-  "userId": 1,
-  "answers": [{ "questionId": 10, "selectedOptionIndex": 2 }]
-}
-```
+## Progreso, logros y timeline
 
-- **Respuesta**: `200` con `attemptId`, `score` y el detalle de cada pregunta.
+### POST /progress/modules/complete
 
-### GET /users/:userId/performance
+- **Descripción**: Marca un módulo como completado y evalúa logros.
+- **Body**:
+  ```json
+  {
+    "userId": 1,
+    "moduleId": 23
+  }
+  ```
+- **Respuestas**: `201 Created` con el progreso y logros otorgados, `409 Conflict` si ya estaba completado.
 
-- **Descripcion**: Estadisticas de quizzes rendidos por un usuario (puntajes, fechas, promedio).
+### GET /progress/users/:userId/progress
+
+- **Descripción**: Devuelve módulos completados y logros.
+
+### GET /progress/users/:userId/dashboard
+
+- **Descripción**: Resumen rápido (conteos, siguiente módulo sugerido placeholder, racha placeholder).
+
+### GET /progress/users/:userId/timeline
+
+- **Descripción**: Agrega los eventos clave para el usuario (solicitudes, rutas, módulos pendientes, quizzes, TTS, logros, progreso reciente).
+- **Respuesta**: `200 OK` con arreglos `requests`, `studyPaths`, `pendingModules`, `quizzes`, `ttsJobs`, `achievements`, `recentProgress`.
+
+## Agente de productividad
+
+### POST /agent
+
+- **Descripción**: Envía un `prompt` a Gemini, que puede llamar herramientas para tareas.
+- **Body**:
+  ```json
+  {
+    "prompt": "Que deberia hacer hoy?"
+  }
+  ```
+- **Respuestas**:
+  - `200 OK` con `{ "text": "..." }` cuando Gemini responde directo.
+  - `200 OK` con `{ "toolResult": { ... } }` cuando ejecuta funciones (`add_task`, `get_tasks`, `update_task_status`, `get_daily_recommendations`).
+  - `400 Bad Request` si faltan argumentos.
 
 ## Notas generales
 
-- Todos los endpoints devuelven errores estructurados `{ "error": "mensaje" }`.
-- Middleware de logging agrega `req.log`, lo cual permite trazar acciones en Pino.
-- Para operaciones asincronas (study path, quiz, imagenes, TTS) el cliente debe consultar el estado mediante endpoints dedicados o actualizar la UI tras recibir un webhook (no implementado aun).
+- Middleware de logging proporciona `req.log` para trazabilidad.
+- Operaciones asincronas (ruta, imágenes, quiz, TTS) requieren polling mediante los endpoints indicados.
+- Cada worker registra logs detallados en la consola con contexto (`context` en Pino) para depuración.
