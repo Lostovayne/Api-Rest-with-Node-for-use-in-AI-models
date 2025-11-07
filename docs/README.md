@@ -10,8 +10,9 @@ Bienvenido al paquete de documentacion tecnica del backend de Ritmo. Este backen
 ## Estructura de la documentacion
 
 - [Arquitectura](architecture.md): componentes, servicios externos y dependencias.
-- [Endpoints](endpoints.md): contratos HTTP con ejemplos.
+- [Endpoints](endpoints.md): contratos HTTP con ejemplos actualizados.
 - [Flujos y jobs](workflows.md): pasos, colas y workers involucrados en cada proceso.
+- [Guía para Android](android-ai-brief.md): instrucciones para que la app Kotlin consuma el backend.
 - [Setup local](setup-local.md): como levantar la API, los workers y los servicios de apoyo en desarrollo.
 
 Mantener estos archivos actualizados permite que nuevos servicios (por ejemplo el cliente Android o agentes de IA) comprendan el estado del backend y lo consuman correctamente.

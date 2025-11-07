@@ -29,14 +29,14 @@ Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, 
 
 ## 🟡 Fase 2: Flujo MVP Ritmo (en progreso)
 
-- [ ] **Onboarding de usuario**: exponer `POST /users` y endpoints de consulta para obtener `userId` y preferencias iniciales.
-- [ ] **Tracking de solicitudes asincronas**: crear tabla `study_path_requests` (u otra estructura) que devuelva `requestId` al llamar `POST /study-path` y permita poll con `GET /study-path-requests/:id`.
-- [ ] **Endpoints de consumo diario**:
-  - [ ] `GET /study-paths` (listar rutas disponibles por usuario/tema).
-  - [ ] `GET /modules/:id/quiz` o similar para saber si existe quiz generado.
-  - [ ] Endpoint para listar trabajos TTS por modulo o usuario.
-- [ ] **Resumen diario**: `GET /users/:id/timeline` con módulos pendientes, quizzes listos, audios generados y logros recientes.
-- [ ] **Documentacion del flujo end-to-end**: actualizar `docs/endpoints.md` y `docs/workflows.md` con guias paso a paso para la app Android (incluye polling y estados).
+- [x] **Onboarding de usuario**: exponer `POST /users` y endpoints de consulta para obtener `userId` y preferencias iniciales.
+- [x] **Tracking de solicitudes asincronas**: crear tabla `study_path_requests` (u otra estructura) que devuelva `requestId` al llamar `POST /study-path` y permita poll con `GET /study-path-requests/:id`.
+- [x] **Endpoints de consumo diario**:
+  - [x] `GET /study-paths` (listar rutas disponibles por usuario/tema).
+  - [x] `GET /modules/:id/quiz` o similar para saber si existe quiz generado.
+  - [x] Endpoint para listar trabajos TTS por modulo o usuario.
+- [x] **Resumen diario**: `GET /users/:id/timeline` con módulos pendientes, quizzes listos, audios generados y logros recientes.
+- [x] **Documentacion del flujo end-to-end**: actualizar `docs/endpoints.md`, `docs/workflows.md`, `docs/mvp-flow.http` y guias para Android con pasos de polling y estados.
 - [ ] **Seed y pruebas del MVP**: script que cree usuario demo + ruta ejemplo y checklist/manual de pruebas (curl/Postman) para validar el recorrido completo.
 
 ---
