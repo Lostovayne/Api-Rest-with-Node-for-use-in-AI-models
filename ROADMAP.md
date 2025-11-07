@@ -1,95 +1,93 @@
 # 🛣️ Roadmap de Ritmo
 
-Este documento describe la hoja de ruta para el desarrollo de **Ritmo**, una aplicación de bienestar integral enfocada en ayudar a los usuarios a gestionar sus vidas a su propio ritmo, abarcando aprendizaje, productividad, hábitos y salud física/emocional.
+Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, habitos y soporte emocional. Este roadmap resume el estado actual del backend y el orden propuesto para avanzar el MVP.
 
 ---
 
-## ✅ Fase 1: Refactorización y Fundamentos de Producción
+## ✅ Fase 0: Fundacion del MVP (completado)
 
-*Objetivo: Solidificar la arquitectura actual, optimizar el manejo de archivos y asegurar que el proyecto esté listo para producción.*
-
-- [x] **Integración de Almacenamiento de Blobs (Vercel Blob)**
-    - [x] **Investigación y Configuración:**
-        - [x] El usuario creará una cuenta en Vercel y obtendrá las credenciales de la API para Vercel Blob.
-        - [x] Añadir las credenciales al sistema de variables de entorno (`.env`).
-    - [x] **Implementación del Servicio:**
-        - [x] Instalar la librería cliente de Vercel Blob (`bun add @vercel/blob`).
-        - [x] Crear un nuevo servicio `services/blobService.ts` que encapsule la lógica de subida de archivos.
-    - [x] **Refactorización del Worker de TTS:**
-        - [x] Modificar la tabla `tts_jobs` en `db.ts`: reemplazar `audio_base64 TEXT` y `mime_type VARCHAR` por una única columna `audio_url TEXT`.
-        - [x] Modificar la tarea `workers/tasks/tts.task.ts` para que:
-            1. Decodifique el audio de Base64 a un buffer.
-            2. Llame al `blobService` para subir el buffer.
-            3. Guarde la URL devuelta por el `blobService` en la columna `audio_url` de la tabla `tts_jobs`.
-- [x] **Revisión de Estándares de Producción**
-    - [x] Analizar la configuración de seguridad actual (Helmet, CORS, Rate Limiting) y proponer mejoras si es necesario.
-    - [x] Verificar que el logging sea consistente y provea suficiente información en un entorno de producción.
-    - [x] Revisar el `Dockerfile` y el workflow de GitHub Actions para asegurar que siguen las mejores prácticas.
+- [x] Levantar API Express con seguridad base (Helmet, CORS, rate limiting) y logging centralizado con Pino.
+- [x] Definir esquema de PostgreSQL con pgvector para rutas, modulos, quizzes, logros y trabajos TTS.
+- [x] Configurar RabbitMQ y el worker `tasks.consumer` para manejar trabajos asincronos.
+- [x] Implementar generacion de rutas de estudio con Gemini + embeddings y persistencia en base de datos.
+- [x] Implementar pipeline de quiz: generacion asincrona, almacenamiento y evaluacion de respuestas.
+- [x] Implementar sistema de texto a voz usando Gemini y almacenamiento en Vercel Blob.
+- [x] Implementar servicio de logros y rachas basico (asignacion de logros al completar modulos).
+- [x] Integrar busqueda semantica con pgvector (`GET /search`).
 
 ---
 
-## 🎮 Fase 2: Engagement del Usuario (Gamificación y Tiempo Real)
+## ✅ Fase 1: Fundamentos de produccion
 
-*Objetivo: Aumentar la interacción y retención del usuario mediante sistemas de recompensa y notificaciones instantáneas.*
-
-- [ ] **Implementación de Notificaciones en Tiempo Real (WebSockets)**
-    - [ ] Crear un nuevo servicio de WebSockets (ej. usando la librería `ws`).
-    - [ ] El cliente se conectará y suscribirá a eventos usando los `jobId` de las tareas asíncronas.
-    - [ ] Modificar los workers (`quiz`, `tts`, `images`) para que, al finalizar una tarea, publiquen un evento en RabbitMQ.
-    - [ ] El servicio de WebSockets escuchará estos eventos y notificará al cliente correspondiente en tiempo real.
-- [ ] **Expansión del Sistema de Gamificación**
-    - [ ] **Integración de Redis:**
-        - [ ] Añadir Redis al stack. Usar una instancia local en desarrollo (Docker) y un servicio gestionado en producción (Railway/Upstash).
-        - [ ] Instalar la librería cliente de Redis (ej. `ioredis`).
-    - [ ] **Implementación de Leaderboards:**
-        - [ ] Usar `Sorted Sets` de Redis para implementar tablas de clasificación (ej. "módulos completados por semana").
-        - [ ] Crear nuevos endpoints en la API para consultar estos leaderboards.
-    - [ ] **Sistema de Rachas (Streaks):**
-        - [ ] Usar Redis para almacenar la última fecha de actividad de un usuario y calcular las rachas de estudio diarias.
+- [x] Integracion con Vercel Blob para archivos de audio generados por TTS.
+- [x] Revisar middleware de seguridad y logging para entornos productivos.
+- [x] Revisar `Dockerfile` y pipeline de GitHub Actions (`docker-publish.yml`).
+- [x] Documentacion tecnica inicial (`docs/`): arquitectura, endpoints, flujos y setup local.
+- [x] Añadir servicio de Typesense al `docker-compose.yml` para desarrollo local y parseo automatico de variables de entorno (`config/typesense.config.ts`).
 
 ---
 
-## 🤖 Fase 3: IA Conversacional y Bienestar Integral
+## 🟡 Fase 2: Flujo MVP Ritmo (en progreso)
 
-*Objetivo: Implementar el núcleo de la propuesta de valor de Ritmo, un asistente de IA y funcionalidades de seguimiento de objetivos personales.*
-
-- [ ] **Tutor de IA Especializado (Chat con Memoria)**
-    - [ ] **Almacenamiento de Conversaciones:**
-        - [ ] Usar Redis para almacenar el historial de chat de cada usuario, manteniendo el estado de la conversación con el tutor.
-    - [ ] **Implementación de RAG (Retrieval-Augmented Generation):**
-        - [ ] Crear un nuevo endpoint de chat (ej. `POST /tutor/chat`).
-        - [ ] Al recibir una pregunta, usar `pgvector` para buscar el contenido más relevante dentro de los módulos de estudio del usuario.
-        - [ ] Enviar el contexto relevante junto con la pregunta del usuario a Gemini para obtener una respuesta precisa y basada en el material.
-- [ ] **Módulo de Bienestar y Objetivos (Expansión del MVP)**
-    - [ ] **Diseño de la Base de Datos:**
-        - [ ] Crear nuevas tablas para `goals` (metas, ej. "Ahorrar 100€") y `habits` (hábitos, ej. "Jugar menos de 1h al día").
-    - [ ] **Nuevos Endpoints de la API:**
-        - [ ] Desarrollar endpoints CRUD para que el usuario gestione sus metas y hábitos.
-    - [ ] **Integración con el Agente de IA:**
-        - [ ] Expandir las herramientas del `agentController` para que pueda interactuar con las metas y hábitos del usuario.
-        - [ ] Crear prompts y lógica para que el agente pueda dar consejos motivacionales, registrar el progreso y sugerir acciones para el bienestar físico y emocional.
+- [ ] **Onboarding de usuario**: exponer `POST /users` y endpoints de consulta para obtener `userId` y preferencias iniciales.
+- [ ] **Tracking de solicitudes asincronas**: crear tabla `study_path_requests` (u otra estructura) que devuelva `requestId` al llamar `POST /study-path` y permita poll con `GET /study-path-requests/:id`.
+- [ ] **Endpoints de consumo diario**:
+  - [ ] `GET /study-paths` (listar rutas disponibles por usuario/tema).
+  - [ ] `GET /modules/:id/quiz` o similar para saber si existe quiz generado.
+  - [ ] Endpoint para listar trabajos TTS por modulo o usuario.
+- [ ] **Resumen diario**: `GET /users/:id/timeline` con módulos pendientes, quizzes listos, audios generados y logros recientes.
+- [ ] **Documentacion del flujo end-to-end**: actualizar `docs/endpoints.md` y `docs/workflows.md` con guias paso a paso para la app Android (incluye polling y estados).
+- [ ] **Seed y pruebas del MVP**: script que cree usuario demo + ruta ejemplo y checklist/manual de pruebas (curl/Postman) para validar el recorrido completo.
 
 ---
 
-## 🚀 Fase 4: Expansión de Servicios Base
+## 🔷 Fase 3: Engagement y contexto personal
 
-*Objetivo: Integrar servicios especializados para potenciar las capacidades de búsqueda, IA y tareas automatizadas.*
+### Estado de animo y objetivos rapidos
 
-- [ ] **Motor de Búsqueda de Texto (Typesense)**
-    - [ ] Investigar e integrar **Typesense** para ofrecer búsqueda por palabra clave instantánea y avanzada sobre los módulos de estudio y otros recursos.
-- [ ] **Base de Datos Vectorial Dedicada (Qdrant)**
-    - [ ] Migrar de `pgvector` a **Qdrant** para mejorar el rendimiento y la escalabilidad de las búsquedas semánticas para el tutor de IA.
-- [ ] **Gestor de Tareas Programadas (Ofelia)**
-    - [ ] Implementar **Ofelia** para manejar tareas recurrentes como la limpieza de datos, envío de informes o recálculos periódicos.
+- [ ] Capturar estado de animo y objetivos inmediatos (ej. "estoy cansado", "quiero mejorar fisicamente").
+- [ ] Ajustar generacion de rutas para combinar estudio, ejercicio ligero y recomendaciones emocionales basadas en ese input.
+
+### Motor de busqueda de texto (Typesense)
+
+- [x] Desplegar imagen de Typesense en Railway para produccion.
+- [x] Habilitar instancia local via Docker Compose e indexar modulos desde los workers.
+- [ ] Evaluar Typesense Cloud y definir estrategia de alta disponibilidad y backups.
+- [ ] Completar endpoints de administracion (reindexacion manual, verificacion de estado) y documentar proceso de seed.
+
+### Notificaciones push (Firebase Cloud Messaging)
+
+- [ ] Crear proyecto Firebase y credenciales de Admin SDK.
+- [ ] Implementar servicio en el backend para enviar notificaciones tras finalizar trabajos (quiz, TTS, rutas).
+- [ ] Coordinar con el cliente Android para recibir tokens y manejar notificaciones en la UI.
+
+### Gamificacion extendida
+
+- [ ] Añadir Redis al stack (Docker en dev, servicio gestionado en prod).
+- [ ] Implementar leaderboards con `Sorted Sets`.
+- [ ] Implementar sistema de rachas diarias apoyado en Redis.
 
 ---
 
-## 🏗️ Fase 5: Infraestructura y Monitoreo (Largo Plazo)
+## 🤖 Fase 4: IA conversacional y bienestar integral
 
-*Objetivo: Asegurar la escalabilidad, fiabilidad y observabilidad de la plataforma a medida que crece.*
+- [ ] Persistir historiales de chat (Redis) para el tutor personalizado.
+- [ ] Crear endpoint RAG (`POST /tutor/chat`) que combine pgvector + Gemini.
+- [ ] Disenar y exponer endpoints para metas (`goals`) y habitos (`habits`).
+- [ ] Ampliar herramientas del agente para gestionar metas/habitos y dar seguimiento emocional.
 
-- [ ] **Implementación de un API Gateway**
-    - [ ] Investigar e integrar un API Gateway como **Kong** para centralizar el enrutamiento, la autenticación y la seguridad.
-- [ ] **Stack de Observabilidad**
-    - [ ] **Métricas:** Integrar **Prometheus** para la recolección de métricas de rendimiento de la aplicación y los servicios.
-    - [ ] **Visualización:** Usar **Grafana** para crear dashboards y visualizar las métricas de Prometheus, así como logs y trazas.
+---
+
+## 🚀 Fase 5: Infraestructura avanzada y monitoreo
+
+- [ ] Evaluar migracion a base vectorial dedicada (Qdrant) conforme crezca el volumen.
+- [ ] Integrar scheduler (Ofelia) para tareas recurrentes (limpieza, reportes, recordatorios).
+- [ ] Integrar un API Gateway (Kong) para centralizar seguridad y rate limiting.
+- [ ] Implementar stack de observabilidad: Prometheus + Grafana (metricas, logs, trazas).
+
+---
+
+## Seguimiento y proximos pasos
+
+- Mantener la carpeta `docs/` alineada con cada entrega para que el equipo Android e IAs asistentes tengan contexto actualizado.
+- Prioridad inmediata: completar la **Fase 2** y validar el flujo MVP de inicio a fin; despues avanzar con estado de animo/notificaciones segun la Fase 3.
