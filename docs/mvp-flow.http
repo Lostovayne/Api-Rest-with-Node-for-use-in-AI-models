@@ -1,0 +1,78 @@
+@host = http://localhost:3000
+@username = ada
+@userId = 1
+@requestId = 488eebbf-bd8f-4288-b025-4924b2e384a6
+@studyPathId = 0
+@moduleId = 0
+@ttsJobId = 00000000-0000-0000-0000-000000000000
+
+# Ejecuta las requests en orden y actualiza manualmente los identificadores anteriores según las respuestas.
+
+### Create or reuse a user
+# Ejecuta y copia el "id" resultante en @userId si deseas reutilizarlo.
+POST {{host}}/users
+Content-Type: application/json
+
+{
+  "username": "{{username}}"
+}
+
+### Inspect current user
+GET {{host}}/users/{{userId}}
+
+### Enqueue study path generation (requires running workers)
+# Actualiza @requestId con el valor devuelto si quieres reutilizarlo.
+POST {{host}}/study-path
+Content-Type: application/json
+
+{
+  "topic": "Aprender Kafka desde cero",
+  "userId": {{userId}}
+}
+
+### Poll study path request status (repeat until status becomes completed)
+# Cuando la respuesta incluya study_path_id y módulos, actualiza @studyPathId y @moduleId.
+GET {{host}}/study-path-requests/{{requestId}}
+
+### List study paths for the user
+GET {{host}}/study-paths?userId={{userId}}
+
+### Fetch modules for the latest study path
+GET {{host}}/study-paths/{{studyPathId}}
+
+### Mark first module as completed (requires moduleId from previous response)
+POST {{host}}/progress/modules/complete
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "moduleId": {{moduleId}}
+}
+
+### Review user timeline aggregation
+GET {{host}}/progress/users/{{userId}}/timeline
+
+### Create a text-to-speech job
+# Guarda el jobId retornado en @ttsJobId si lo necesitas luego.
+POST {{host}}/text-to-speech
+Content-Type: application/json
+
+{
+  "text": "Hola, esta es una prueba de texto a voz para el usuario {{username}}.",
+  "userId": {{userId}}
+}
+
+### Check text-to-speech job status
+GET {{host}}/text-to-speech/{{ttsJobId}}
+
+### List recent text-to-speech jobs for the user
+GET {{host}}/text-to-speech?userId={{userId}}
+
+### Semantic search using pgvector
+GET {{host}}/search?q=vector
+
+### Typesense keyword search
+GET {{host}}/search/typesense?q=vector
+
+### Fetch the latest quiz for a module (requires moduleId and generated quiz)
+GET {{host}}/modules/{{moduleId}}/quiz

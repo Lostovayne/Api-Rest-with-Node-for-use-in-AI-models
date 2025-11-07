@@ -1,7 +1,9 @@
+import { Type } from "@google/genai";
 import { logger as mainLogger } from "../../api/middlewares/logger";
+import { rabbitmqConfig } from "../../config/rabbitmq.config";
 import pool from "../../db";
 import { generateEmbedding, generateStructuredText } from "../../services/geminiService";
-import { Type } from "@google/genai";
+import { queueService } from "../../services/queueService";
 import { typesenseService } from "../../services/typesenseService";
 
 const taskLogger = mainLogger.child({ context: "GenerateStudyPathTask" });
@@ -31,11 +33,17 @@ const studyPathSchema = {
 
 interface TaskPayload {
   topic: string;
+  userId: number;
+  requestId: string;
 }
 
 export const handleGenerateStudyPath = async (payload: TaskPayload) => {
-  const { topic } = payload;
-  taskLogger.info({ topic }, `Processing task: Generate study path`);
+  const { topic, userId, requestId } = payload;
+  taskLogger.info({ topic, userId, requestId }, `Processing task: Generate study path`);
+
+  if (requestId) {
+    await pool.query("UPDATE study_path_requests SET status = 'processing' WHERE id = $1", [requestId]);
+  }
 
   try {
     const prompt = `Crea una ruta de estudio detallada, paso a paso, para aprender ${topic}. 
@@ -50,8 +58,8 @@ export const handleGenerateStudyPath = async (payload: TaskPayload) => {
     try {
       await client.query("BEGIN");
       const studyPathResult = await client.query(
-        "INSERT INTO study_paths (topic) VALUES ($1) RETURNING id",
-        [topic]
+        "INSERT INTO study_paths (user_id, topic) VALUES ($1, $2) RETURNING id",
+        [userId, topic]
       );
       const studyPathId = studyPathResult.rows[0].id;
 
@@ -67,28 +75,49 @@ export const handleGenerateStudyPath = async (payload: TaskPayload) => {
         );
 
         modulesToIndex.push({
-            ...insertedModule.rows[0],
-            study_path_id: studyPathId,
+          ...insertedModule.rows[0],
+          study_path_id: studyPathId,
         });
       }
 
       await client.query("COMMIT");
-      taskLogger.info({ topic, studyPathId }, `Successfully generated and saved study path.`);
+      taskLogger.info({ topic, studyPathId, userId }, `Successfully generated and saved study path.`);
+
+      await pool.query(
+        "UPDATE study_path_requests SET status = 'completed', study_path_id = $1, completed_at = NOW() WHERE id = $2",
+        [studyPathId, requestId]
+      );
+
+      // Trigger image generation asynchronously after the study path is ready.
+      const imageTask = {
+        taskType: "generateImages",
+        payload: { studyPathId },
+      };
+      await queueService.sendToQueue(rabbitmqConfig.queues.taskQueue, JSON.stringify(imageTask));
 
       // Index modules in Typesense after successful commit
       for (const module of modulesToIndex) {
         await typesenseService.indexModule(module as any);
       }
-
     } catch (e) {
       await client.query("ROLLBACK");
-      taskLogger.error({ err: e, topic }, `Failed to save study path to DB.`);
+      taskLogger.error({ err: e, topic, requestId }, `Failed to save study path to DB.`);
+      await pool.query(
+        "UPDATE study_path_requests SET status = 'failed', error_message = $1, completed_at = NOW() WHERE id = $2",
+        [e instanceof Error ? e.message : "Unknown error", requestId]
+      );
       throw e;
     } finally {
       client.release();
     }
   } catch (error) {
-    taskLogger.error({ err: error, topic }, `Failed to generate study path.`);
+    taskLogger.error({ err: error, topic, requestId }, `Failed to generate study path.`);
+    if (requestId) {
+      await pool.query(
+        "UPDATE study_path_requests SET status = 'failed', error_message = $1, completed_at = NOW() WHERE id = $2",
+        [error instanceof Error ? error.message : "Unknown error", requestId]
+      );
+    }
     throw error;
   }
 };

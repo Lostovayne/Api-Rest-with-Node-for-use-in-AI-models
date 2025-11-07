@@ -8,10 +8,33 @@ class TypesenseService {
 
   constructor() {
     this.client = new Client(typesenseConfig);
+
+    const nodesForLog = typesenseConfig.nodes.map((node) => {
+      if ("url" in node && node.url) {
+        try {
+          const parsed = new URL(node.url);
+          return {
+            host: parsed.hostname,
+            port: Number(parsed.port || (parsed.protocol === "https:" ? 443 : 80)),
+            protocol: parsed.protocol.replace(":", ""),
+          };
+        } catch (error) {
+          logger.warn({ err: error, context: "Typesense" }, "Failed to parse Typesense node url");
+          return { host: node.url, port: undefined, protocol: undefined };
+        }
+      }
+
+      return {
+        host: (node as any).host,
+        port: (node as any).port,
+        protocol: (node as any).protocol,
+      };
+    });
+
     logger.info(
       {
         context: "Typesense",
-        nodes: typesenseConfig.nodes.map(({ host, port, protocol }) => ({ host, port, protocol })),
+        nodes: nodesForLog,
       },
       "Typesense client initialised"
     );
