@@ -67,6 +67,10 @@ Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, 
 - [ ] Implementar leaderboards con `Sorted Sets`.
 - [ ] Implementar sistema de rachas diarias apoyado en Redis.
 
+### Generacion dinamica de imagenes
+
+- [ ] Incorporar un extractor de entidades (PLN) en el pipeline de prompts para imagenes, de modo que los modulos cuenten con descripciones más ricas cuando se expanda a nuevos dominios.
+
 ---
 
 ## 🤖 Fase 4: IA conversacional y bienestar integral
