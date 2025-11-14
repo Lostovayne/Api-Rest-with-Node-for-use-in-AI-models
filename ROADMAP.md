@@ -37,7 +37,7 @@ Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, 
   - [x] Endpoint para listar trabajos TTS por modulo o usuario.
 - [x] **Resumen diario**: `GET /users/:id/timeline` con módulos pendientes, quizzes listos, audios generados y logros recientes.
 - [x] **Documentacion del flujo end-to-end**: actualizar `docs/endpoints.md`, `docs/workflows.md`, `docs/mvp-flow.http` y guias para Android con pasos de polling y estados.
-- [ ] **Mi Día asistido**: exponer `POST /users/:id/day-plan` y `GET /users/:id/day-plan` que invoquen la herramienta `get_daily_recommendations`, mezclen tareas abiertas, progreso de rutas y preferencias, y devuelvan un layout listo para la UI.
+- [x] **Mi Día asistido**: exponer `POST /users/:id/day-plan` y `GET /users/:id/day-plan` que invoquen la herramienta `get_daily_recommendations`, mezclen tareas abiertas, progreso de rutas y preferencias, y devuelvan un layout listo para la UI.
 - [ ] **Sincronización con el asistente**: ampliar el agente para registrar estado de ánimo, energía, gustos y preocupaciones mediante nuevas herramientas (`log_mood_snapshot`, `log_user_fact`) y persistirlas.
 - [ ] **Seed y pruebas del MVP**: script que cree usuario demo + ruta ejemplo y checklist/manual de pruebas (curl/Postman) para validar el recorrido completo.
 

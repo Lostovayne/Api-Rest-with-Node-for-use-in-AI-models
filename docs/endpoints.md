@@ -179,13 +179,41 @@ Referencia de los endpoints expuestos por la API Express. Todos aceptan y devuel
 - **Body**:
   ```json
   {
-    "prompt": "Que deberia hacer hoy?"
+    "prompt": "Que deberia hacer hoy?",
+    "userId": 1
   }
   ```
 - **Respuestas**:
   - `200 OK` con `{ "text": "..." }` cuando Gemini responde directo.
   - `200 OK` con `{ "toolResult": { ... } }` cuando ejecuta funciones (`add_task`, `get_tasks`, `update_task_status`, `get_daily_recommendations`).
   - `400 Bad Request` si faltan argumentos.
+
+## Mi Día asistido (Fase 2)
+
+### POST /users/:userId/day-plan
+
+- **Descripción**: Genera (o regenera) el plan diario personalizado del usuario combinando tareas, módulos pendientes, estado de ánimo y logros recientes.
+- **Body** (opcional):
+  ```json
+  {
+    "planDate": "2025-11-14",
+    "force": true
+  }
+  ```
+- **Respuestas**:
+  - `201 Created` cuando se genera un nuevo plan.
+  - `200 OK` cuando ya existía y se devuelve sin regenerar (a menos que `force` sea `true`).
+  - `400 Bad Request` si `userId` no es válido.
+- **Notas**: Devuelve `{ plan, context, metadata }`. El `context` incluye las tareas y módulos que se usaron para construir la recomendación.
+
+### GET /users/:userId/day-plan
+
+- **Descripción**: Recupera el plan diario previamente generado para la fecha indicada.
+- **Query params**: `date` (opcional, formato `YYYY-MM-DD`; por defecto usa la fecha actual).
+- **Respuestas**:
+  - `200 OK` con el mismo payload `{ plan, context, metadata }`.
+  - `404 Not Found` si aún no se ha generado un plan para esa fecha.
+  - `400 Bad Request` si la fecha es inválida o el `userId` no corresponde.
 
 ## Notas generales
 

@@ -152,6 +152,45 @@ export const createTables = async () => {
             );
         `);
 
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS user_mood_snapshots (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          mood VARCHAR(50) NOT NULL,
+          energy_level INTEGER,
+          stress_level INTEGER,
+          note TEXT,
+          tags TEXT[],
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS user_day_plans (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          plan_date DATE NOT NULL,
+          plan JSONB NOT NULL,
+          context JSONB,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (user_id, plan_date)
+        );
+      `);
+
+    await client.query(`
+        CREATE TABLE IF NOT EXISTS user_journal_entries (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          entry_date DATE NOT NULL DEFAULT CURRENT_DATE,
+          title TEXT,
+          summary TEXT,
+          raw_content TEXT,
+          metadata JSONB,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
     // Alter table after it has been created
     await client.query(
       "ALTER TABLE study_path_modules ADD COLUMN IF NOT EXISTS embedding vector(3072);"
@@ -159,7 +198,9 @@ export const createTables = async () => {
     await client.query(
       "ALTER TABLE study_paths ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);"
     );
-    await client.query("ALTER TABLE study_path_requests ADD COLUMN IF NOT EXISTS error_message TEXT;");
+    await client.query(
+      "ALTER TABLE study_path_requests ADD COLUMN IF NOT EXISTS error_message TEXT;"
+    );
     await client.query(
       "ALTER TABLE study_path_requests ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;"
     );
@@ -173,6 +214,22 @@ export const createTables = async () => {
     );
     await client.query(
       "ALTER TABLE tts_jobs ADD COLUMN IF NOT EXISTS module_id INTEGER REFERENCES study_path_modules(id);"
+    );
+
+    await client.query(
+      "ALTER TABLE user_tasks ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);"
+    );
+
+    await client.query(
+      "ALTER TABLE user_tasks ADD COLUMN IF NOT EXISTS due_at TIMESTAMP WITH TIME ZONE;"
+    );
+
+    await client.query(
+      "ALTER TABLE user_day_plans ADD COLUMN IF NOT EXISTS context JSONB;"
+    );
+
+    await client.query(
+      "ALTER TABLE user_day_plans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"
     );
   } finally {
     client.release();
@@ -193,14 +250,16 @@ export const seedDatabase = async () => {
       {
         name: "First Step",
         description: "Complete your first module.",
-        icon_prompt: "a cute 3D bronze medal for a first achievement, clean background, shiny, award",
+        icon_prompt:
+          "a cute 3D bronze medal for a first achievement, clean background, shiny, award",
         milestone_type: "MODULE_COMPLETION",
         milestone_value: 1,
       },
       {
         name: "Apprentice",
         description: "Complete 5 modules.",
-        icon_prompt: "a cute 3D silver medal for an apprentice learner, clean background, shiny, award",
+        icon_prompt:
+          "a cute 3D silver medal for an apprentice learner, clean background, shiny, award",
         milestone_type: "MODULE_COMPLETION",
         milestone_value: 5,
       },
@@ -225,7 +284,13 @@ export const seedDatabase = async () => {
     for (const ach of achievements) {
       await client.query(
         "INSERT INTO achievements (name, description, icon_prompt, milestone_type, milestone_value) VALUES ($1, $2, $3, $4, $5)",
-        [ach.name, ach.description, ach.icon_prompt, ach.milestone_type, ach.milestone_value]
+        [
+          ach.name,
+          ach.description,
+          ach.icon_prompt,
+          ach.milestone_type,
+          ach.milestone_value,
+        ]
       );
     }
 

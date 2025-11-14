@@ -201,4 +201,16 @@ Estos endpoints proporcionan resúmenes del estado del usuario, ideales para un 
 
 ## Fase 2 (en preparación)
 
-Cuando los nuevos endpoints y vistas del roadmap vayan quedando listos (Mi Día asistido, métricas de bienestar, diario personal, etc.), añadiremos aquí sus flujos y ejemplos para mantener la documentación alineada por fases.
+### Mi Día asistido
+
+1. El cliente invoca **`POST /users/:userId/day-plan`** con `planDate` (opcional) y `force` (opcional).
+
+- El backend compone el contexto (tareas, módulos pendientes, logros recientes, último estado de ánimo) y pide a Gemini un plan estructurado.
+- Se persiste el resultado en `user_day_plans` para la fecha indicada, junto con el snapshot del contexto utilizado.
+- Respuesta: `{ plan, context, metadata }`, donde `metadata.source` indica si se generó o se reutilizó.
+
+2. La pantalla **Mi Día** consume **`GET /users/:userId/day-plan?date=YYYY-MM-DD`** para mostrar el plan almacenado sin disparar regeneraciones innecesarias.
+
+- Si no hay plan para esa fecha, la API responde `404` y el cliente puede ofrecer el CTA para generarlo.
+
+Próximamente se documentarán los flujos de estado de ánimo, diario personal y logros de bienestar conforme se liberen los endpoints correspondientes.
