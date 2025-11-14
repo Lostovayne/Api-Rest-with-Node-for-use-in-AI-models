@@ -2,6 +2,8 @@
 
 Este documento describe el flujo de interacción recomendado para un cliente que consume la API de Ritmo, detallando el orden en que se deben llamar los endpoints y la lógica de negocio asociada.
 
+> **Nota de versionado**: Las secciones siguientes corresponden a la **Fase 1** del MVP. Cada vez que incorporemos nuevos endpoints o vistas de la **Fase 2 en adelante**, documentaremos el flujo actualizado en un apartado propio para que el equipo de frontend pueda sincronizar sus entregas por fase.
+
 ## Diagrama General del Flujo de Usuario
 
 A continuación, se presenta un diagrama de secuencia que ilustra el viaje principal del usuario en la aplicación, desde el registro hasta completar un módulo de estudio.
@@ -50,6 +52,7 @@ sequenceDiagram
 El primer paso es registrar al usuario para obtener un `userId` que se usará en todas las peticiones posteriores.
 
 - **`POST /users`**: Registra un nuevo usuario o recupera uno existente.
+
   - **Petición**: `{ "username": "nombre_de_usuario" }`
   - **Respuesta Exitosa (`200 OK` o `201 Created`)**: `{ "id": 1, "username": "nombre_de_usuario", ... }`
   - **Uso**: Guardar el `id` en el cliente para futuras llamadas.
@@ -62,6 +65,7 @@ El primer paso es registrar al usuario para obtener un `userId` que se usará en
 El usuario solicita una ruta de estudio sobre un tema de interés. Este es un proceso asíncrono.
 
 - **`POST /study-path`**: Inicia la generación de la ruta.
+
   - **Petición**: `{ "topic": "Aprender sobre IA", "userId": 1 }`
   - **Respuesta Exitosa (`202 Accepted`)**: `{ "message": "...", "requestId": "uuid-..." }`
   - **Flujo**:
@@ -88,6 +92,7 @@ Una vez que una ruta de estudio está creada, el cliente puede obtener la lista 
 El cliente notifica al backend cuando un usuario completa un módulo.
 
 - **`POST /modules/complete`**: Marca un módulo como completado.
+
   - **Petición**: `{ "userId": 1, "moduleId": 23 }`
   - **Respuesta Exitosa (`201 Created`)**: `{ "progress": {...}, "achievements": [...] }`
   - **Uso**: Permite al backend registrar el avance y otorgar logros.
@@ -99,14 +104,17 @@ El cliente notifica al backend cuando un usuario completa un módulo.
 Para cada módulo, el cliente puede solicitar la generación de un quiz y luego permitir al usuario tomarlo.
 
 - **`POST /modules/:moduleId/quiz`**: Solicita la generación de un quiz para un módulo. Es un proceso asíncrono.
+
   - **Respuesta (`202 Accepted`)**: Indica que el trabajo fue encolado.
 
 - **`GET /modules/:moduleId/quiz`**: Obtiene el quiz generado.
+
   - **Uso**: El cliente puede hacer polling a este endpoint o simplemente intentar obtenerlo cuando el usuario quiera realizar el quiz.
   - **Respuesta Exitosa (`200 OK`)**: `{ "quiz": {...}, "questions": [...] }`
   - **Respuesta si no existe (`404 Not Found`)**: Indica que el quiz aún no está listo.
 
 - **`POST /quizzes/:quizId/submit`**: Envía las respuestas del usuario.
+
   - **Petición**: `{ "userId": 1, "answers": [{ "questionId": 10, "selectedOptionIndex": 2 }] }`
   - **Respuesta (`200 OK`)**: `{ "attemptId": 45, "score": 85.5, "corrections": [...] }`
 
@@ -115,11 +123,14 @@ Para cada módulo, el cliente puede solicitar la generación de un quiz y luego 
 ### 6. Funcionalidades Adicionales
 
 #### Búsqueda
+
 - **`GET /search?q=texto`**: Búsqueda semántica en todos los módulos.
 - **`GET /search/typesense?q=texto`**: Búsqueda por palabras clave usando Typesense.
 
 #### Texto a Voz (TTS)
+
 - **`POST /text-to-speech`**: Inicia la conversión de texto a voz para un módulo (asíncrono).
+
   - **Petición**: `{ "text": "...", "userId": 1, "moduleId": 23 }`
   - **Respuesta (`202 Accepted`)**: `{ "jobId": "uuid-..." }`
 
@@ -127,20 +138,25 @@ Para cada módulo, el cliente puede solicitar la generación de un quiz y luego 
 - **`GET /text-to-speech`**: Lista los trabajos de TTS de un usuario.
 
 #### Agente IA
+
 - **`POST /agent`**: Envía un prompt al agente de IA para obtener recomendaciones o ejecutar tareas.
   - **Petición**: `{ "prompt": "¿Qué me recomiendas estudiar hoy?" }`
   - **Respuesta**: Puede ser texto directo (`{ "text": "..." }`) o el resultado de una herramienta (`{ "toolResult": {...} }`).
 
 ##### Herramientas del Agente
+
 Cuando el agente necesita interactuar con el sistema para cumplir una solicitud, utiliza las siguientes herramientas. El frontend puede usar esta información para entender qué capacidades tiene el agente.
 
 - **`add_task`**: Añade una nueva tarea a la lista del usuario.
+
   - **Argumentos**: `{ "task": "Descripción de la tarea" }` (string)
 
 - **`get_tasks`**: Obtiene la lista de tareas del usuario.
+
   - **Argumentos**: `{ "status": "pending" }` (string, opcional). Puede ser "pending", "completed", etc. Si se omite, devuelve todas las tareas.
 
 - **`update_task_status`**: Actualiza el estado de una tarea existente.
+
   - **Argumentos**: `{ "taskId": 123, "status": "completed" }` (number, string)
 
 - **`get_daily_recommendations`**: Genera una recomendación personalizada para el día.
@@ -156,27 +172,33 @@ Estos endpoints proporcionan resúmenes del estado del usuario, ideales para un 
 
 ## Lista Completa de Endpoints
 
-| Verbo  | Ruta                                | Descripción                                     |
-| :----- | :---------------------------------- | :---------------------------------------------- |
-| POST   | `/users`                            | Registrar o recuperar un usuario.               |
-| GET    | `/users/:userId`                    | Obtener datos de un usuario.                    |
-| POST   | `/study-path`                       | Crear una nueva ruta de estudio (asíncrono).    |
-| GET    | `/study-path-requests/:requestId`   | Consultar estado de una solicitud de ruta.      |
-| GET    | `/study-paths`                      | Listar rutas de estudio.                        |
-| GET    | `/study-path/:id`                   | Obtener módulos de una ruta.                    |
-| GET    | `/study-path-modules/:id`           | Obtener un módulo específico.                   |
-| POST   | `/generate-images-for-path`         | Regenerar imágenes para una ruta.               |
-| POST   | `/modules/complete`                 | Marcar un módulo como completado.               |
-| GET    | `/users/:userId/progress`           | Obtener progreso y logros de un usuario.        |
-| GET    | `/users/:userId/dashboard`          | Obtener un resumen para el dashboard.           |
-| GET    | `/users/:userId/timeline`           | Obtener una línea de tiempo de eventos.         |
-| POST   | `/modules/:moduleId/quiz`           | Generar un quiz para un módulo (asíncrono).     |
-| GET    | `/modules/:moduleId/quiz`           | Obtener el quiz de un módulo.                   |
-| POST   | `/quizzes/:quizId/submit`           | Enviar respuestas de un quiz.                   |
-| GET    | `/users/:userId/performance`        | **(Nuevo)** Obtener rendimiento en quizzes.     |
-| GET    | `/search`                           | Búsqueda semántica (pgvector).                  |
-| GET    | `/search/typesense`                 | Búsqueda por keywords (Typesense).              |
-| POST   | `/text-to-speech`                   | Crear un trabajo de texto a voz (asíncrono).    |
-| GET    | `/text-to-speech`                   | Listar trabajos de TTS.                         |
-| GET    | `/text-to-speech/:jobId`            | Consultar estado de un trabajo de TTS.          |
-| POST   | `/agent`                            | Interactuar con el agente de IA.                |
+| Verbo | Ruta                              | Descripción                                  |
+| :---- | :-------------------------------- | :------------------------------------------- |
+| POST  | `/users`                          | Registrar o recuperar un usuario.            |
+| GET   | `/users/:userId`                  | Obtener datos de un usuario.                 |
+| POST  | `/study-path`                     | Crear una nueva ruta de estudio (asíncrono). |
+| GET   | `/study-path-requests/:requestId` | Consultar estado de una solicitud de ruta.   |
+| GET   | `/study-paths`                    | Listar rutas de estudio.                     |
+| GET   | `/study-path/:id`                 | Obtener módulos de una ruta.                 |
+| GET   | `/study-path-modules/:id`         | Obtener un módulo específico.                |
+| POST  | `/generate-images-for-path`       | Regenerar imágenes para una ruta.            |
+| POST  | `/modules/complete`               | Marcar un módulo como completado.            |
+| GET   | `/users/:userId/progress`         | Obtener progreso y logros de un usuario.     |
+| GET   | `/users/:userId/dashboard`        | Obtener un resumen para el dashboard.        |
+| GET   | `/users/:userId/timeline`         | Obtener una línea de tiempo de eventos.      |
+| POST  | `/modules/:moduleId/quiz`         | Generar un quiz para un módulo (asíncrono).  |
+| GET   | `/modules/:moduleId/quiz`         | Obtener el quiz de un módulo.                |
+| POST  | `/quizzes/:quizId/submit`         | Enviar respuestas de un quiz.                |
+| GET   | `/users/:userId/performance`      | **(Nuevo)** Obtener rendimiento en quizzes.  |
+| GET   | `/search`                         | Búsqueda semántica (pgvector).               |
+| GET   | `/search/typesense`               | Búsqueda por keywords (Typesense).           |
+| POST  | `/text-to-speech`                 | Crear un trabajo de texto a voz (asíncrono). |
+| GET   | `/text-to-speech`                 | Listar trabajos de TTS.                      |
+| GET   | `/text-to-speech/:jobId`          | Consultar estado de un trabajo de TTS.       |
+| POST  | `/agent`                          | Interactuar con el agente de IA.             |
+
+---
+
+## Fase 2 (en preparación)
+
+Cuando los nuevos endpoints y vistas del roadmap vayan quedando listos (Mi Día asistido, métricas de bienestar, diario personal, etc.), añadiremos aquí sus flujos y ejemplos para mantener la documentación alineada por fases.

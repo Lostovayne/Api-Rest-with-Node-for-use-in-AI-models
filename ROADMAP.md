@@ -37,16 +37,24 @@ Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, 
   - [x] Endpoint para listar trabajos TTS por modulo o usuario.
 - [x] **Resumen diario**: `GET /users/:id/timeline` con módulos pendientes, quizzes listos, audios generados y logros recientes.
 - [x] **Documentacion del flujo end-to-end**: actualizar `docs/endpoints.md`, `docs/workflows.md`, `docs/mvp-flow.http` y guias para Android con pasos de polling y estados.
+- [ ] **Mi Día asistido**: exponer `POST /users/:id/day-plan` y `GET /users/:id/day-plan` que invoquen la herramienta `get_daily_recommendations`, mezclen tareas abiertas, progreso de rutas y preferencias, y devuelvan un layout listo para la UI.
+- [ ] **Sincronización con el asistente**: ampliar el agente para registrar estado de ánimo, energía, gustos y preocupaciones mediante nuevas herramientas (`log_mood_snapshot`, `log_user_fact`) y persistirlas.
 - [ ] **Seed y pruebas del MVP**: script que cree usuario demo + ruta ejemplo y checklist/manual de pruebas (curl/Postman) para validar el recorrido completo.
 
 ---
 
 ## 🔷 Fase 3: Engagement y contexto personal
 
-### Estado de animo y objetivos rapidos
+### Estado de animo y bienestar integral
 
-- [ ] Capturar estado de animo y objetivos inmediatos (ej. "estoy cansado", "quiero mejorar fisicamente").
-- [ ] Ajustar generacion de rutas para combinar estudio, ejercicio ligero y recomendaciones emocionales basadas en ese input.
+- [ ] Capturar estado de animo, energia y estres via `POST /users/:id/mood` y almacenar un historial consultable.
+- [ ] Generar analiticas sencillas (`GET /users/:id/mood/summary`) con promedios, rachas y alertas.
+- [ ] Ajustar generacion de rutas y Mi Día para proponer descansos, ejercicio ligero o contenidos calmantes segun el estado del usuario.
+
+### Diario personal y hechos relevantes
+
+- [ ] Crear herramienta del agente `record_user_journal` que estructure eventos, preocupaciones y logros reportados en chat.
+- [ ] Exponer `GET /users/:id/journal` para que el cliente muestre destacados diarios/semana y generar recordatorios de reflexion.
 
 ### Motor de busqueda de texto (Typesense)
 
@@ -66,6 +74,7 @@ Ritmo es la plataforma de bienestar y aprendizaje que combina rutas de estudio, 
 - [ ] Añadir Redis al stack (Docker en dev, servicio gestionado en prod).
 - [ ] Implementar leaderboards con `Sorted Sets`.
 - [ ] Implementar sistema de rachas diarias apoyado en Redis.
+- [ ] Incorporar logros contextuales vinculados a bienestar (ej. "5 dias consecutivos equilibrando estudio y descanso").
 
 ### Generacion dinamica de imagenes
 
