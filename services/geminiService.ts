@@ -203,6 +203,56 @@ const taskToolDeclarations: FunctionDeclaration[] = [
       properties: {},
     },
   },
+  {
+    name: "log_mood_snapshot",
+    parameters: {
+      type: Type.OBJECT,
+      description:
+        "Registra un estado de ánimo del usuario con energía, estrés y notas opcionales.",
+      properties: {
+        userId: { type: Type.NUMBER, description: "ID del usuario" },
+        mood: { type: Type.STRING, description: "Estado de ánimo" },
+        energyLevel: {
+          type: Type.NUMBER,
+          description: "Nivel de energía percibido (1-10)",
+        },
+        stressLevel: {
+          type: Type.NUMBER,
+          description: "Nivel de estrés percibido (1-10)",
+        },
+        note: { type: Type.STRING, description: "Comentario opcional" },
+        tags: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "Etiquetas relevantes",
+        },
+      },
+      required: ["userId", "mood"],
+    },
+  },
+  {
+    name: "record_user_fact",
+    parameters: {
+      type: Type.OBJECT,
+      description:
+        "Registra un hecho importante compartido por el usuario (gustos, preocupaciones, logros).",
+      properties: {
+        userId: { type: Type.NUMBER, description: "ID del usuario" },
+        title: { type: Type.STRING, description: "Título corto del hecho" },
+        summary: { type: Type.STRING, description: "Descripción resumida" },
+        rawContent: {
+          type: Type.STRING,
+          description: "Detalle textual o cita directa del usuario",
+        },
+        tags: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "Etiquetas para clasificar el hecho",
+        },
+      },
+      required: ["userId", "summary"],
+    },
+  },
 ];
 
 export const useTools = async (prompt: string): Promise<GenerateContentResponse> => {

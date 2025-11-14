@@ -218,8 +218,8 @@ const fetchPlanFromDb = async (
 
   return {
     ...row,
-    plan: ensureJsonObject<DayPlanPayload>(row.plan),
-    context: ensureJsonObject<DayPlanContextSnapshot | null>(row.context),
+    plan: ensureJsonObject<DayPlanPayload>(row.plan as any),
+    context: ensureJsonObject<DayPlanContextSnapshot | null>(row.context as any),
   };
 };
 
@@ -434,9 +434,9 @@ export const generateDayPlan = async (
     const existing = await fetchPlanFromDb(userId, planDate);
     if (existing) {
       return {
-        plan: ensureJsonObject<DayPlanPayload>(existing.plan),
+        plan: ensureJsonObject<DayPlanPayload>(existing.plan as any),
         context:
-          ensureJsonObject<DayPlanContextSnapshot | null>(existing.context) ??
+          ensureJsonObject<DayPlanContextSnapshot | null>(existing.context as any) ??
           (await buildContextSnapshot(userId, planDate)),
         metadata: {
           planDate: existing.plan_date,
@@ -462,7 +462,7 @@ export const generateDayPlan = async (
   const stored = await upsertDayPlan(userId, planDate, parsed.plan, contextSnapshot);
 
   return {
-    plan: ensureJsonObject<DayPlanPayload>(stored.plan),
+    plan: ensureJsonObject<DayPlanPayload>(stored.plan as any),
     context: contextSnapshot,
     metadata: {
       planDate: stored.plan_date,

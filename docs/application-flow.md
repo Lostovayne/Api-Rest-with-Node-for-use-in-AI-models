@@ -162,6 +162,12 @@ Cuando el agente necesita interactuar con el sistema para cumplir una solicitud,
 - **`get_daily_recommendations`**: Genera una recomendación personalizada para el día.
   - **Argumentos**: Ninguno.
   - **Descripción**: Esta herramienta es más compleja. Internamente, obtiene las tareas pendientes del usuario y la hora del día. Luego, utiliza un modelo de IA (potencialmente con búsqueda en Google) para generar una sugerencia motivadora y contextual sobre qué hacer a continuación. El resultado no es un JSON estructurado, sino un texto enriquecido con consejos.
+- **`log_mood_snapshot`**: Registra el estado de ánimo actual del usuario.
+  - **Argumentos**: `{ "userId?": 1, "mood": "calm", "energyLevel?": 8, "stressLevel?": 3, "note?": "Texto libre", "tags?": ["post-workout"] }`.
+  - **Descripción**: El agente la utiliza cuando detecta que el usuario expresó emociones explícitas o completó el check-in diario. Persiste en `user_mood_snapshots` y alimenta el dashboard de bienestar.
+- **`record_user_fact`**: Guarda hechos o reflexiones relevantes del diario.
+  - **Argumentos**: `{ "userId?": 1, "summary": "Descripción corta", "entryDate?": "2025-11-14", "title?": "titulo opcional", "rawContent?": "texto completo", "tags?": ["gratitude"] }`.
+  - **Descripción**: Se activa cuando el modelo detecta información que vale la pena recordar (metas personales, bloqueos, wins). Inserta en `user_journal_entries` y está pensado para que la app pueda renderizar un timeline de hábitos.
 
 ### 7. Vistas Consolidadas (Dashboards)
 
@@ -214,3 +220,18 @@ Estos endpoints proporcionan resúmenes del estado del usuario, ideales para un 
 - Si no hay plan para esa fecha, la API responde `404` y el cliente puede ofrecer el CTA para generarlo.
 
 Próximamente se documentarán los flujos de estado de ánimo, diario personal y logros de bienestar conforme se liberen los endpoints correspondientes.
+
+### Estado de ánimo y diario guiados por el agente
+
+1. El agente obtiene la intención del usuario desde el chat; cuando detecta frases como “me siento frustrado” o “hoy logré…”, llama a las herramientas descritas arriba.
+2. **`log_mood_snapshot`** escribe en `user_mood_snapshots` y la app puede consultar:
+
+- `GET /users/:userId/mood` para mostrar el historial reciente (parámetro `limit` opcional).
+- `GET /users/:userId/mood/summary` para obtener promedios de energía/estrés, distribución de emociones y el último snapshot.
+
+3. **`record_user_fact`** crea entradas en `user_journal_entries`. El cliente puede usar:
+
+- `GET /users/:userId/journal` (con `limit` opcional) para la lista paginada.
+- `GET /users/:userId/journal/:entryId` para detallar una nota concreta.
+
+4. Si el frontend necesita disparar manualmente estos flujos (por ejemplo, un check-in guiado), puede llamar directamente a los endpoints REST equivalentes descritos en `docs/endpoints.md`. De lo contrario, basta con consumir los datos que el agente ya sincroniza en segundo plano.

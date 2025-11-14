@@ -1,6 +1,8 @@
 import { Router } from "express";
 import agentRoutes from "./agentRoutes";
 import dayPlanRoutes from "./dayPlanRoutes";
+import journalRoutes from "./journalRoutes";
+import moodRoutes from "./moodRoutes";
 import progressRoutes from "./progressRoutes";
 import quizRoutes from "./quizRoutes";
 import searchRoutes from "./searchRoutes";
@@ -18,5 +20,7 @@ router.use("/", quizRoutes);
 router.use("/", searchRoutes);
 router.use("/", userRoutes);
 router.use("/", dayPlanRoutes);
+router.use("/", moodRoutes);
+router.use("/", journalRoutes);
 
 export default router;

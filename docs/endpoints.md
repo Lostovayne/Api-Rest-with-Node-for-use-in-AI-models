@@ -185,8 +185,68 @@ Referencia de los endpoints expuestos por la API Express. Todos aceptan y devuel
   ```
 - **Respuestas**:
   - `200 OK` con `{ "text": "..." }` cuando Gemini responde directo.
-  - `200 OK` con `{ "toolResult": { ... } }` cuando ejecuta funciones (`add_task`, `get_tasks`, `update_task_status`, `get_daily_recommendations`).
+  - `200 OK` con `{ "toolResult": { ... } }` cuando ejecuta funciones (`add_task`, `get_tasks`, `update_task_status`, `get_daily_recommendations`, `log_mood_snapshot`, `record_user_fact`).
   - `400 Bad Request` si faltan argumentos.
+
+## Bienestar (estado de ánimo y diario)
+
+### POST /users/:userId/mood
+
+- **Descripción**: Registra un snapshot del estado de ánimo del usuario. Lo emplea tanto el cliente (check-in manual) como el agente mediante la herramienta `log_mood_snapshot`.
+- **Body**:
+  ```json
+  {
+    "mood": "motivado",
+    "energyLevel": 8,
+    "stressLevel": 3,
+    "note": "Listo para el sprint",
+    "tags": ["mañana", "gym"]
+  }
+  ```
+- **Respuestas**:
+  - `201 Created` con el snapshot almacenado (`id`, `user_id`, `mood`, niveles, `tags`, `created_at`).
+  - `400 Bad Request` si falta `mood` o el `userId` es inválido.
+
+### GET /users/:userId/mood
+
+- **Descripción**: Devuelve el historial reciente de snapshots (máximo 30 por defecto).
+- **Query params**: `limit` opcional.
+- **Respuesta**: `200 OK` con `{ "snapshots": [...] }`.
+
+### GET /users/:userId/mood/summary
+
+- **Descripción**: Calcula promedios de energía/estrés y distribución de emociones de los últimos 30 días.
+- **Respuesta**: `200 OK` con `{ userId, sampleSize, averageEnergy, averageStress, moodDistribution, recentSnapshots, latestEntry }`.
+
+### POST /users/:userId/journal
+
+- **Descripción**: Guarda una entrada del diario personal; el agente la invoca como `record_user_fact` cuando identifica notas relevantes.
+- **Body**:
+  ```json
+  {
+    "entryDate": "2025-11-14",
+    "title": "Resumen diario",
+    "summary": "Tuve una sesión productiva",
+    "rawContent": "...",
+    "metadata": { "tags": ["gratitud"] }
+  }
+  ```
+- **Respuestas**:
+  - `201 Created` con la entrada (`id`, `entry_date`, `summary`, etc.).
+  - `400 Bad Request` si la fecha es inválida.
+
+### GET /users/:userId/journal
+
+- **Descripción**: Lista entradas recientes del diario.
+- **Query params**: `limit` opcional (default 20).
+- **Respuesta**: `200 OK` con `{ "entries": [...] }`.
+
+### GET /users/:userId/journal/:entryId
+
+- **Descripción**: Recupera una entrada puntual del diario.
+- **Respuestas**:
+  - `200 OK` con la entrada completa.
+  - `404 Not Found` si no existe o pertenece a otro usuario.
 
 ## Mi Día asistido (Fase 2)
 
