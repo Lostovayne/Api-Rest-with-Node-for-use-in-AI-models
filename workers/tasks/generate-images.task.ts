@@ -110,7 +110,7 @@ const CONCEPT_MAPPINGS: ConceptMapping[] = [
   {
     keywords: ["algoritmo", "algorithm"],
     metaphor:
-      "un adorable buho pensador con un pequeno lapiz y una secuencia de pasos simplificada flotando a su alrededor",
+      "un adorable buho chibi con gafas sujetando un pequeno lapiz mientras bloques numerados pastel flotan a su alrededor, todos suspendidos en el aire",
   },
   {
     keywords: [
@@ -120,12 +120,12 @@ const CONCEPT_MAPPINGS: ConceptMapping[] = [
       "data structures",
     ],
     metaphor:
-      "pequenos bloques de construccion apilados de forma ordenada, cada uno con una carita sonriente",
+      "bloques modulares apilados con caritas sonrientes y conectores suaves en colores pastel, configurados como una torre flotante",
   },
   {
     keywords: ["base de datos", "bases de datos", "database"],
     metaphor:
-      "pequenos contenedores de informacion apilados de forma ordenada, cada uno con una etiqueta feliz",
+      "contenedores cilindricos pastel apilados como servidores chibi, con etiquetas felices y luces suaves flotando juntos",
   },
   {
     keywords: [
@@ -137,7 +137,7 @@ const CONCEPT_MAPPINGS: ConceptMapping[] = [
       "estadistica",
     ],
     metaphor:
-      "simbolos matematicos suaves flotando alrededor de una calculadora sonriente muy simpatica",
+      "una calculadora chibi rodeada de simbolos matematicos pastel flotando en el aire con brillo sutil",
   },
   {
     keywords: [
@@ -148,7 +148,7 @@ const CONCEPT_MAPPINGS: ConceptMapping[] = [
       "encriptacion",
     ],
     metaphor:
-      "un pequeno escudo brillante con ojos grandes y un candado amistoso en el centro",
+      "un escudo vinilo con rostro simpatico sujetando un candado brillante, flotando con destellos suaves",
   },
   {
     keywords: [
@@ -159,20 +159,22 @@ const CONCEPT_MAPPINGS: ConceptMapping[] = [
       "deep learning",
     ],
     metaphor:
-      "un robotito amistoso analizando datos flotantes con graficos suaves y corazones",
+      "un robotito chibi analizando graficas holograficas con particulas de datos pastel flotando a su alrededor",
   },
   {
     keywords: ["redes neuronales", "neural networks"],
-    metaphor: "una nube suave conectada por nodos brillantes con caritas felices",
+    metaphor:
+      "una nube vinilo con carita feliz conectada a nodos brillantes en forma de red flotante",
   },
   {
     keywords: ["cloud", "nube", "cloud computing", "computacion en la nube"],
     metaphor:
-      "una nube esponjosa con carita feliz sosteniendo pequenos servidores brillantes",
+      "nube esponjosa con ojos brillantes sosteniendo pequenos servidores chibi, todo flotando con destellos",
   },
   {
     keywords: ["project management", "gestion de proyectos", "scrum", "kanban", "agile"],
-    metaphor: "una libreta adorable con post-its de colores y un reloj sonriente",
+    metaphor:
+      "una libreta adorable con post-its pastel y reloj sonriente, acompanados de lapices chibi flotando cerca",
   },
 ];
 
@@ -189,10 +191,10 @@ const GAME_DEFINITIONS: GameDefinition[] = [
 ];
 
 const FALLBACK_DETAIL =
-  "un adorable libro de estudio abierto con un lapiz y una bombilla brillante emergiendo, simbolizando el aprendizaje y la creatividad";
+  "un adorable libro de estudio abierto estilo vinilo chibi, con un lapiz pastel y una bombilla brillante emergiendo, aislado sin plataforma";
 
 const buildPromptFromDetail = (detail: string) =>
-  `Diseno de icono animado 3D de alta calidad, estilo tierno y agradable. El elemento central representa ${detail}. Los colores son suaves, pasteles y vibrantes, con bordes ligeramente redondeados y un acabado tipo vinilo. Se incorpora un sutil brillo o halo alrededor del elemento principal para un efecto premium. El fondo es completamente blanco y liso (#FFFFFF). Estilo vectorial, renderizado 3D de estudio, alta resolucion, iluminacion suave.`;
+  `Diseno de icono animado 3D de alta calidad, estilo tierno y agradable tipo figura vinilo chibi. El elemento central representa ${detail} y aparece aislado, sin elementos extra, sin plataforma ni escenario. Los colores son suaves, pasteles y vibrantes, con bordes ligeramente redondeados, reflejos pulidos y una textura vinilo premium. Solo se permite una sombra extremadamente suave pegada al personaje para dar profundidad. El fondo debe ser completamente blanco puro (#FFFFFF) como si fuera un PNG sobre fondo blanco, sin degradados ni decoraciones.`;
 
 const FALLBACK_PROMPT = buildPromptFromDetail(FALLBACK_DETAIL);
 
@@ -223,35 +225,9 @@ const buildNormalizedCorpus = (module: ModuleRecord) => {
   const subtopics = getSubtopics(module);
   const parts = [module.title, module.description, module.topic, subtopics.join(" ")];
   return parts
-    .filter(Boolean)
+    .filter((part): part is string => Boolean(part))
     .map((part) => normalizeText(part))
     .join(" ");
-};
-
-const extractSubjectFromTitle = (title: string, keywords: string[]) => {
-  const lowerTitle = title.toLowerCase();
-  for (const keyword of keywords) {
-    const lowerKeyword = keyword.toLowerCase();
-    const index = lowerTitle.indexOf(lowerKeyword);
-    if (index >= 0) {
-      const rawAfter = title.slice(index + keyword.length).trim();
-      if (!rawAfter) {
-        continue;
-      }
-      const candidate = rawAfter.split(/[-:\u2013\u2014\(]/)[0].trim();
-      const cleaned = candidate
-        .replace(/^de\s+/i, "")
-        .replace(/^del\s+/i, "")
-        .replace(/^la\s+/i, "")
-        .replace(/^el\s+/i, "")
-        .replace(/["']/g, "")
-        .trim();
-      if (cleaned) {
-        return cleaned;
-      }
-    }
-  }
-  return null;
 };
 
 const cleanSubjectName = (subject: string, gameName: string) => {
@@ -266,7 +242,7 @@ const detectProgrammingLanguage = (
     if (language.keywords.some((keyword) => normalizedCorpus.includes(keyword))) {
       return {
         classification: "programming-language",
-        detail: `El logo oficial de ${language.name}, con un diseno 3D tierno, una expresion amigable y pequenos ojos brillantes, rodeado de algunos simbolos de codigo simples.`,
+        detail: `El logo oficial de ${language.name}, extruido como figura vinilo chibi flotante en tonos pastel, con destellos suaves y pequenos simbolos de codigo alrededor.`,
       };
     }
   }
@@ -295,7 +271,7 @@ const detectGame = (
       const subject = cleanSubjectName(subjectRaw, game.name) || module.title;
       return {
         classification: "game-character",
-        detail: `El personaje ${subject} de ${game.name}, con una expresion adorable, en una pose amigable y sosteniendo su arma iconica version caricatura.`,
+        detail: `El personaje ${subject} de ${game.name}, representado como figura chibi vinilo 3D con cabeza grande y ojos brillantes, en pose amigable sosteniendo su arma iconica pastel, flotando sobre el fondo blanco.`,
       };
     }
 
@@ -305,7 +281,7 @@ const detectGame = (
       const subject = cleanSubjectName(subjectRaw, game.name) || module.title;
       return {
         classification: "game-map",
-        detail: `Una version simplificada y tierna del mapa ${subject} de ${game.name}, con pequenos detalles juguetones y elementos del entorno amigables.`,
+        detail: `Un mini diorama isometrico flotante del mapa ${subject} de ${game.name}, con caminos suaves, torres chibi y naturaleza pastel con brillo delicado.`,
       };
     }
 
@@ -315,13 +291,13 @@ const detectGame = (
       const subject = cleanSubjectName(subjectRaw, game.name) || module.title;
       return {
         classification: "game-item",
-        detail: `Una representacion linda y animada de ${subject} de ${game.name}, con ojos grandes y un toque de personalidad heroica.`,
+        detail: `Una figura vinilo chibi del objeto ${subject} de ${game.name}, con ojos grandes brillantes y detalles heroicos en tonos pastel, flotando sin plataforma.`,
       };
     }
 
     return {
       classification: "game-generic",
-      detail: `Un elemento iconico de ${game.name}, disenado con formas suaves y encantadoras para transmitir la esencia del juego.`,
+      detail: `Un simbolo iconico de ${game.name} convertido en pieza coleccionable chibi de vinilo, con formas suaves, gradientes pastel y halo luminoso flotante.`,
     };
   }
 
@@ -337,7 +313,7 @@ const detectConcept = (
       const subject = module.title || module.topic || "el concepto";
       return {
         classification: "concept",
-        detail: `Una ilustracion 3D tierna y animada de ${subject}, representada por ${concept.metaphor}.`,
+        detail: `Una figura vinilo chibi de ${subject}, representada por ${concept.metaphor}.`,
       };
     }
   }
