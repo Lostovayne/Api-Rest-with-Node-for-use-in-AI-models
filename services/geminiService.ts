@@ -7,17 +7,52 @@ import {
   Type,
 } from "@google/genai";
 
-const getGenAI = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("La variable de entorno API_KEY no está configurada");
+const cachedClients: Record<string, GoogleGenAI> = {};
+
+export const getGenAI = () => {
+  const useVertex = process.env.GOOGLE_GENAI_USE_VERTEXAI === "true";
+
+  if (useVertex) {
+    const project = process.env.GOOGLE_CLOUD_PROJECT;
+    if (!project) {
+      throw new Error(
+        "GOOGLE_GENAI_USE_VERTEXAI está activo pero falta GOOGLE_CLOUD_PROJECT"
+      );
+    }
+
+    const location = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
+    const cacheKey = `vertex-ai:${project}:${location}`;
+
+    if (!cachedClients[cacheKey]) {
+      cachedClients[cacheKey] = new GoogleGenAI({
+        vertexai: true,
+        project,
+        location,
+      });
+    }
+
+    return cachedClients[cacheKey];
   }
-  return new GoogleGenAI({ apiKey });
+
+  const apiKey =
+    process.env.API_KEY ?? process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      "No se encontró una API key para Gemini. Define API_KEY, GOOGLE_API_KEY o GEMINI_API_KEY"
+    );
+  }
+
+  if (!cachedClients[apiKey]) {
+    cachedClients[apiKey] = new GoogleGenAI({ apiKey });
+  }
+
+  return cachedClients[apiKey];
 };
 
 export const generateStructuredText = async (
   prompt: string,
-  responseSchema: any | null = null,
+  responseSchema: any | null = null
 ): Promise<string> => {
   const ai = getGenAI();
 
@@ -136,11 +171,13 @@ const taskToolDeclarations: FunctionDeclaration[] = [
     name: "get_tasks",
     parameters: {
       type: Type.OBJECT,
-      description: "Obtiene una lista de las tareas del usuario, opcionalmente filtrando por estado.",
+      description:
+        "Obtiene una lista de las tareas del usuario, opcionalmente filtrando por estado.",
       properties: {
         status: {
           type: Type.STRING,
-          description: "El estado por el cual filtrar (por ejemplo, 'pendiente', 'completado').",
+          description:
+            "El estado por el cual filtrar (por ejemplo, 'pendiente', 'completado').",
         },
       },
     },
@@ -190,7 +227,9 @@ export const createChat = (): Chat => {
   });
 };
 
-export const groundWithSearch = async (prompt: string): Promise<GenerateContentResponse> => {
+export const groundWithSearch = async (
+  prompt: string
+): Promise<GenerateContentResponse> => {
   const ai = getGenAI();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -233,7 +272,8 @@ export const connectLive = (callbacks: any): Promise<any> => {
       speechConfig: {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
       },
-      systemInstruction: "Eres una IA conversacional amigable y útil. Mantén tus respuestas concisas.",
+      systemInstruction:
+        "Eres una IA conversacional amigable y útil. Mantén tus respuestas concisas.",
     },
   });
 };

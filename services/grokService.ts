@@ -1,24 +1,12 @@
-import OpenAI from "openai";
+import { generateImageFromGemini } from "./imageGenerationService";
 
-export const client = new OpenAI({
-  apiKey: process.env.XAI_API_KEY,
-  baseURL: "https://api.x.ai/v1",
-});
-
+/**
+ * @deprecated Este metodo mantiene compatibilidad con el nombre antiguo pero ahora usa Gemini.
+ *             Migra tus importaciones a `generateImageFromGemini` para un control mas preciso.
+ */
 export const generateImageFromGroq = async (prompt: string): Promise<string> => {
-  const response = await client.images.generate({
-    model: "grok-2-image",
-    prompt: `Un ícono 3D moderno y tierno, simple, limpio, de alta calidad, en formato PNG con fondo transparente. ${prompt}`,
-    n: 1,
-  });
-
-  if (!response.data || response.data.length === 0) {
-    throw new Error("No se generaron imágenes.");
-  }
-
-  const imageUrl = response.data[0].url;
-  if (!imageUrl) {
-    throw new Error("No se encontró URL de imagen en la respuesta");
-  }
-  return imageUrl;
+  console.warn(
+    "generateImageFromGroq esta deprecado y delega en Gemini. Actualiza el codigo para usar generateImageFromGemini."
+  );
+  return generateImageFromGemini(prompt, { filenamePrefix: "legacy-grok-image" });
 };

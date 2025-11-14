@@ -1,14 +1,29 @@
-import { put, type PutBlobResult } from '@vercel/blob';
+import { put, type PutBlobResult } from "@vercel/blob";
 
-export async function uploadAudioBlob(filename: string, audioBuffer: Buffer, contentType: string): Promise<PutBlobResult> {
+const uploadBlob = async (
+  filename: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<PutBlobResult> => {
   try {
-    const blob = await put(filename, audioBuffer, {
-      access: 'public',
-      contentType: contentType,
+    return await put(filename, buffer, {
+      access: "public",
+      contentType,
     });
-    return blob;
   } catch (error) {
-    console.error('Error uploading audio to Vercel Blob:', error);
-    throw new Error('Failed to upload audio to Vercel Blob.');
+    console.error("Error uploading file to Vercel Blob:", error);
+    throw new Error("Failed to upload file to Vercel Blob.");
   }
-}
+};
+
+export const uploadAudioBlob = async (
+  filename: string,
+  audioBuffer: Buffer,
+  contentType: string
+): Promise<PutBlobResult> => uploadBlob(filename, audioBuffer, contentType);
+
+export const uploadImageBlob = async (
+  filename: string,
+  imageBuffer: Buffer,
+  contentType = "image/png"
+): Promise<PutBlobResult> => uploadBlob(filename, imageBuffer, contentType);

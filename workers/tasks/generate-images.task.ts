@@ -1,6 +1,6 @@
 import { logger as mainLogger } from "../../api/middlewares/logger";
 import pool from "../../db";
-import { generateImageFromGroq } from "../../services/grokService";
+import { generateImageFromGemini } from "../../services/imageGenerationService";
 
 const taskLogger = mainLogger.child({ context: "GenerateImagesTask" });
 
@@ -389,7 +389,9 @@ export const handleGenerateImages = async (payload: TaskPayload) => {
         );
 
         try {
-          const imageUrl = await generateImageFromGroq(imagePrompt);
+          const imageUrl = await generateImageFromGemini(imagePrompt, {
+            filenamePrefix: `study-path-${studyPathId}-module-${module.id}`,
+          });
           taskLogger.info(
             { moduleId: module.id, imageUrl },
             "Image generated successfully."

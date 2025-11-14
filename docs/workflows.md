@@ -17,7 +17,7 @@
 
 1. El worker de rutas (`generate-study-path.task.ts`) encola una tarea `generateImages` tan pronto termina de crear la ruta.
 2. `generate-images.task.ts` recupera los modulos del path.
-3. Para cada modulo sin `image_url` llama a `generateImageFromGroq`.
+3. Para cada modulo sin `image_url` llama a `generateImageFromGemini`.
 4. Actualiza la columna `image_url` con el link devuelto.
 5. Loggea el resultado y continua aun si algun modulo falla.
 6. El endpoint `POST /generate-images-for-path` permanece disponible para reenviar manualmente la tarea en caso de reintentos.
@@ -40,7 +40,7 @@
 ## Logros y progreso
 
 - `POST /modules/complete` inserta un registro en `user_module_progress` y luego ejecuta `checkModuleCompletionAchievements`.
-- Ese servicio consulta cuantas unidades tiene el usuario, identifica logros pendientes, genera iconos en Groq y registra el logro en `user_achievements`.
+- Ese servicio consulta cuantas unidades tiene el usuario, identifica logros pendientes, genera iconos en Gemini y registra el logro en `user_achievements`.
 
 ## Busqueda
 
